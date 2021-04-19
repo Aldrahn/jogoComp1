@@ -9,6 +9,9 @@
 #define false 0
 #define singleShot 0
 
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
+
 typedef int bool;
 
 SDL_Texture *loadShipImage(char *shipFilename, SDL_Renderer *renderer)
@@ -39,6 +42,7 @@ PlayerShip *createPlayerShip(SDL_Renderer *renderer)
   player->ally = (Ship *)malloc(sizeof(Ship));
   player->ally->x_axis = 590;
   player->ally->y_axis = 600;
+  player->ally->side = SIDE_PLAYER;
   player->ally->speed = 4;
   player->ally->texture = loadShipImage("assets/objects/player.png", renderer);
 
@@ -52,7 +56,7 @@ int startGameScreen()
 
   SDL_Init(SDL_INIT_VIDEO);
 
-  window = SDL_CreateWindow("SDL2 Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
+  window = SDL_CreateWindow("SDL2 Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 
   if (window == NULL)
   {
@@ -138,6 +142,10 @@ PlayerShip *doKeyDown(SDL_KeyboardEvent *event, PlayerShip *player)
     {
       player->right = 1;
     }
+    if (event->keysym.scancode == SDL_SCANCODE_SPACE)
+    {
+      player->fire = 1;
+    }
   }
 
   return player;
@@ -166,13 +174,18 @@ PlayerShip *doKeyUp(SDL_KeyboardEvent *event, PlayerShip *player)
     {
       player->right = 0;
     }
+    if (event->keysym.scancode == SDL_SCANCODE_SPACE)
+    {
+      player->fire = 0;
+    }
   }
 
   return player;
 }
 
-PlayerShip *movePlayer(PlayerShip *player)
+PlayerShip *movePlayer(PlayerShip *player, Ship *bullet)
 {
+  
 
   if (player->up && player->ally->y_axis >= 0)
   {
@@ -198,6 +211,30 @@ PlayerShip *movePlayer(PlayerShip *player)
     player->ally->x_axis += player->ally->speed;
   }
 
+  if (player->fire && bullet->hp == 0)
+  {
+    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA %d %d", player->fire, bullet->hp);
+    bullet->x_axis = player->ally->x_axis;
+    bullet->y_axis = player->ally->y_axis;
+    bullet->dx = 16;
+    bullet->dy = 0;
+    bullet->hp = 1;
+  }
+
+  bullet->x_axis += bullet->dx;
+  bullet->y_axis += bullet->dy;
+
+  if (bullet->x_axis > SCREEN_WIDTH)
+  {
+    bullet->hp = 0;
+  }
+
+  
+
+
+
+
+
   return player;
 }
 
@@ -208,6 +245,9 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
   SDL_Event ev;
   int waves = 1;
   EnemyShip **arrayWave = (EnemyShip **)malloc(7 * sizeof(EnemyShip *));
+  Ship *bullet = (Ship *)malloc(sizeof(Ship));
+  memset(bullet, 0, sizeof(Ship));
+  bullet->texture = loadShipImage("assets/objects/explosion.png", rend);
 
   for (int i = 0; i < waves; i++)
   {
@@ -237,20 +277,30 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
 
       if (ev.type == SDL_KEYDOWN)
       {
+    
+       
         printf("posição ANTES do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
-        player = movePlayer(doKeyDown(&ev.key, player));
+        player = movePlayer(doKeyDown(&ev.key, player), bullet);
         printf("posição DEPOIS do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
+       
         blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis);
+        printf("BULEEEET %d", bullet->hp);
+        if (bullet->hp > 0)
+        {
+          printf("BULEEEET %d", bullet->hp);
+          blit(bullet->texture, rend, bullet->x_axis, bullet->y_axis);
+        }
       }
 
       if (ev.type == SDL_KEYUP)
       {
+       
+        
         printf("posição ANTES do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
-        player = movePlayer(doKeyUp(&ev.key, player));
+        player = movePlayer(doKeyUp(&ev.key, player), bullet);
         printf("posição DEPOIS do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
       }
     }
-
     //Garante que todos os inimigos continuem se movendo
     for (int j = i; j >= 0; j--)
     {
@@ -294,14 +344,21 @@ EnemyShip *createEnemyShip(int enemyType)
   if (enemyType == 1)
   {
     new->enemy->speed = 2;
+    new->enemy->side = SIDE_ALIEN;
     new->enemy->x_axis = -2;
     new->enemy->y_axis = 301;
-    new->type = 0;
+    new->type = 0; 
     SDL_Rect a = {1, 1, 219, 243};
     SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 50, 50};
     new->enemy->srcrect = a;
     new->enemy->dstrect = b;
+    new->enemy->hp = 1;
   }
 
   return new;
 }
+
+// int collision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
+// {
+// 	return (MAX(x1, x2) < MIN(x1 + w1, x2 + w2)) && (MAX(y1, y2) < MIN(y1 + h1, y2 + h2));
+// }
