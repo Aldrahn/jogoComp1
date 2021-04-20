@@ -11,20 +11,28 @@
 #define SIDE_PLAYER 0
 #define SIDE_ALIEN  1
 
-
+typedef struct Bullet {
+	int hp;
+	int x_axis;
+	int y_axis;
+	int bulletType;
+	int dx;
+	int dy;
+	SDL_Rect srcrect;
+	SDL_Rect dstrect;
+	SDL_Texture* texture;
+} Bullet;
 
  
-
 typedef struct Ship
 {
 	int hp;
 	int side;
 	int speed;
-	int bulletType;
+	
+	Bullet* bullet;
 	int x_axis;
 	int y_axis;
-	int dx;
-	int dy;
 	SDL_Rect srcrect;
 	SDL_Rect dstrect;
 	SDL_Texture* texture;
@@ -47,14 +55,6 @@ typedef struct{
 	int fire;
 } PlayerShip;
 
-typedef struct {
-	int x;
-	int y;
-	int dx;
-	int dy;
-	int health;
-	SDL_Texture *texture;
-} Entity;
 
 int gameLoop(SDL_Window*, SDL_Renderer*, SDL_Texture*);
 int gameMenu();	

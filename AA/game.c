@@ -45,6 +45,9 @@ PlayerShip *createPlayerShip(SDL_Renderer *renderer)
   player->ally->side = SIDE_PLAYER;
   player->ally->speed = 4;
   player->ally->texture = loadShipImage("assets/objects/player.png", renderer);
+  player->ally->bullet = (Bullet*)malloc(sizeof(Bullet));
+  player->ally->bullet->texture = loadShipImage("assets/objects/explosion.png", renderer);
+
 
   return player;
 }
@@ -183,10 +186,9 @@ PlayerShip *doKeyUp(SDL_KeyboardEvent *event, PlayerShip *player)
   return player;
 }
 
-PlayerShip *movePlayer(PlayerShip *player, Ship *bullet)
+PlayerShip *movePlayer(PlayerShip *player)
 {
   
-
   if (player->up && player->ally->y_axis >= 0)
   {
     printf("Movendo-se para cima\n");
@@ -211,28 +213,23 @@ PlayerShip *movePlayer(PlayerShip *player, Ship *bullet)
     player->ally->x_axis += player->ally->speed;
   }
 
-  if (player->fire && bullet->hp == 0)
+  if (player->fire && player->ally->bullet->hp == 0)
   {
-    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA %d %d", player->fire, bullet->hp);
-    bullet->x_axis = player->ally->x_axis;
-    bullet->y_axis = player->ally->y_axis;
-    bullet->dx = 16;
-    bullet->dy = 0;
-    bullet->hp = 1;
+    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA %d %d", player->fire, player->ally->bullet->hp);
+    player->ally->bullet->x_axis = player->ally->x_axis;
+    player->ally->bullet->y_axis = player->ally->y_axis;
+    player->ally->bullet->dx = 16;
+    player->ally->bullet->dy = 0;
+    player->ally->bullet->hp = 1;
   }
 
-  bullet->x_axis += bullet->dx;
-  bullet->y_axis += bullet->dy;
+  player->ally->bullet->x_axis += player->ally->bullet->dx;
+  player->ally->bullet->y_axis += player->ally->bullet->dy;
 
-  if (bullet->x_axis > SCREEN_WIDTH)
+  if (player->ally->bullet->x_axis > SCREEN_WIDTH)
   {
-    bullet->hp = 0;
+    player->ally->bullet->hp = 0;
   }
-
-  
-
-
-
 
 
   return player;
@@ -245,10 +242,8 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
   SDL_Event ev;
   int waves = 1;
   EnemyShip **arrayWave = (EnemyShip **)malloc(7 * sizeof(EnemyShip *));
-  Ship *bullet = (Ship *)malloc(sizeof(Ship));
-  memset(bullet, 0, sizeof(Ship));
-  bullet->texture = loadShipImage("assets/objects/explosion.png", rend);
-
+  
+  
   for (int i = 0; i < waves; i++)
   {
     for (int j = 0; j < 7; j++)
@@ -274,33 +269,21 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
       {
         isRunning = false;
       }
-
       if (ev.type == SDL_KEYDOWN)
       {
-    
-       
         printf("posição ANTES do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
-        player = movePlayer(doKeyDown(&ev.key, player), bullet);
+        player = movePlayer(doKeyDown(&ev.key, player));
         printf("posição DEPOIS do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
        
-        blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis);
-        printf("BULEEEET %d", bullet->hp);
-        if (bullet->hp > 0)
-        {
-          printf("BULEEEET %d", bullet->hp);
-          blit(bullet->texture, rend, bullet->x_axis, bullet->y_axis);
-        }
       }
-
       if (ev.type == SDL_KEYUP)
       {
-       
-        
         printf("posição ANTES do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
-        player = movePlayer(doKeyUp(&ev.key, player), bullet);
+        player = movePlayer(doKeyUp(&ev.key, player));
         printf("posição DEPOIS do movimento\nplayer.x: %d\nplayer.y: %d\n", player->ally->x_axis, player->ally->y_axis);
       }
     }
+
     //Garante que todos os inimigos continuem se movendo
     for (int j = i; j >= 0; j--)
     {
@@ -339,7 +322,7 @@ EnemyShip *createEnemyShip(int enemyType)
 
   EnemyShip *new = (EnemyShip *)malloc(sizeof(EnemyShip));
   new->enemy = (Ship *)malloc(sizeof(Ship));
-  new->enemy->bulletType = singleShot;
+  new->enemy->bullet->bulletType = singleShot;
 
   if (enemyType == 1)
   {
