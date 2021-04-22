@@ -8,7 +8,7 @@
 #define true 1
 #define false 0
 
-#define LEN_BULLET 1000
+
 
 typedef int bool;
 
@@ -19,7 +19,7 @@ int startGameScreen()
 
 	SDL_Init(SDL_INIT_VIDEO);
 
-	window = SDL_CreateWindow("SDL2 Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
+	window = SDL_CreateWindow("SDL2 Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT,  0);
 
 	if (window == NULL)
 	{
@@ -136,8 +136,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
 		//Garante que todos os inimigos continuem se movendo
 		arrayWave = moveEnemies(arrayWave, i);
 
-		bulletVector = moveBullet(bulletVector);
-
 		if (i < 6 && arrayWave[i]->enemy->dstrect.x == arrayWave[i]->enemy->dstrect.w)
 		{
 			i++;
@@ -162,6 +160,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
 			}
 		}
 
+		bulletVector = moveBullet(bulletVector);
 		for (int i = 0; i < bulletVector->firstEmpty; i++)
 		{
 			if (bulletVector->bullets[i] != NULL)
@@ -170,7 +169,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
 			}
 		}
 
-		//if(shipOffscreen() || shipIsDead()){free();}
 
 		SDL_RenderPresent(rend);
 		SDL_UpdateWindowSurface(window);
@@ -190,6 +188,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, SDL_Texture *bg)
 	free(arrayWave);
 	free(player->ally);
 	free(player);
+	free(bulletVector);
 
 	return 0;
 }
@@ -214,6 +213,12 @@ void blit(SDL_Texture *texture, SDL_Renderer *renderer, int x, int y)
 	SDL_RenderCopy(renderer, texture, NULL, &dest);
 }
 
+SDL_Point getSize(SDL_Texture *texture) {
+    SDL_Point size;
+    SDL_QueryTexture(texture, NULL, NULL, &size.x, &size.y);
+    return size;
+}
+
 //funcionamento do player
 PlayerShip *createPlayerShip(SDL_Renderer *renderer)
 {
@@ -223,6 +228,7 @@ PlayerShip *createPlayerShip(SDL_Renderer *renderer)
 	player->ally->x_axis = 590;
 	player->ally->y_axis = 600;
 	player->ally->speed = 8;
+	player->ally->isPlayer = 1;
 	player->ally->texture = loadShipImage("assets/objects/player.png", renderer);
 
 	return player;
@@ -302,7 +308,7 @@ PlayerShip *movePlayer(PlayerShip *player, EnemyShip **enemies)
 		player->ally->y_axis -= player->ally->speed;
 	}
 
-	if (player->down && player->ally->y_axis <= 720 - 46 && shipColision(player, enemies) == false)
+	if (player->down && player->ally->y_axis <= HEIGHT - 46 && shipColision(player, enemies) == false)
 	{
 		player->ally->y_axis += player->ally->speed;
 	}
@@ -312,7 +318,7 @@ PlayerShip *movePlayer(PlayerShip *player, EnemyShip **enemies)
 		player->ally->x_axis -= player->ally->speed;
 	}
 
-	if (player->right && player->ally->x_axis <= 1280 - 48 && shipColision(player, enemies) == false)
+	if (player->right && player->ally->x_axis <= WIDTH - 48 && shipColision(player, enemies) == false)
 	{
 		player->ally->x_axis += player->ally->speed;
 	}
@@ -369,7 +375,7 @@ Bullet *createBullet(Ship *source, BulletVector *bulletVector, SDL_Renderer *ren
 {
 	Bullet *bullet = (Bullet *)malloc(sizeof(Bullet));
 
-	bullet->speed = 16;
+	bullet->speed = 5;
 	bullet->damage = 1;
 	bullet->x_axis = source->x_axis;
 	bullet->y_axis = source->y_axis - 45;
@@ -410,15 +416,42 @@ BulletVector *createBulletVector(void)
 
 BulletVector *moveBullet(BulletVector *bulletVector)
 {
-	for (int i = 0; i < bulletVector->firstEmpty; i++)
-	{
-		bulletVector->bullets[i]->y_axis -= bulletVector->bullets[i]->speed;
-		// if(bulletVector->bullets[i]->y_axis < 720)
-		// {	
-		// 	free(bulletVector->bullets[i]);
-		// 	printf("deu free %d\n", i);
-		// }
+	int firstEmpty = bulletVector->firstEmpty;
+	int removed = 0;
+
+	for (int i = 0; i < firstEmpty; i++)
+	{	
+		if(bulletVector->bullets[i]->owner->isPlayer) 
+		{
+			bulletVector->bullets[i]->y_axis -= bulletVector->bullets[i]->speed;
+		}
+		else
+		{
+			bulletVector->bullets[i]->y_axis += bulletVector->bullets[i]->speed;
+		}
+
+		if(bulletVector->bullets[i]->y_axis <= -HEIGHT_BULLET)
+		{
+			free(bulletVector->bullets[i]);
+			bulletVector->bullets[i] = NULL;
+			removed += 1;
+		}
 	}
+	for (int j = 0; j < removed; j++)
+	{
+		for (int i = 0; i < firstEmpty; i++)
+		{
+			if(bulletVector->bullets[i] == NULL)
+			{
+				bulletVector->bullets[i] = bulletVector->bullets[firstEmpty - 1];
+				bulletVector->bullets[firstEmpty - 1] = NULL; 
+				firstEmpty -= 1;
+				break;
+			}
+		}
+
+	}
+	bulletVector->firstEmpty = firstEmpty;
 	
 	return bulletVector;
 }
@@ -448,7 +481,7 @@ bool shipColision(PlayerShip *player, EnemyShip **enemies)
 
 bool isOffScreen(int x, int y, EnemyShip *enemy)
 {
-	if (y > 720 || x > 1280)
+	if (y > HEIGHT || x > WIDTH)
 	{
 		return true;
 	}
