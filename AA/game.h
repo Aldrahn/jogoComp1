@@ -32,6 +32,7 @@ typedef struct EnemyShip
 {
 	int type;
 	bool spawned;
+	int firstEmpty;
 	Ship *enemy;
 } EnemyShip;
 
@@ -81,7 +82,7 @@ PlayerShip *doKeyUp(SDL_KeyboardEvent *, PlayerShip *);
 
 void addBulletInVector(Bullet *, BulletVector *);
 
-bool shipColision(PlayerShip *, EnemyShip **);
+bool shipCollision(PlayerShip *, EnemyShip **);
 bool isOffScreen(int, int, EnemyShip *);
 
 int max(int, int);
