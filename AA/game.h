@@ -22,15 +22,6 @@
 
 typedef int bool;
 
-typedef int bool;
-
-typedef struct Bullet
-{
-	int bulletType;
-	int x_axis;
-	int y_axis;
-	
-} Bullet;
 
 typedef struct Ship
 {
@@ -43,7 +34,6 @@ typedef struct Ship
 	SDL_Rect srcrect;
 	SDL_Rect dstrect;
 	SDL_Texture *texture;
-	Bullet* bullet;
 } Ship;
 
 typedef struct EnemyShip
