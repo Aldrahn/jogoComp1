@@ -77,7 +77,7 @@ int startGameScreen();
 bool startMenu(SDL_Window*, SDL_Renderer*, SDL_Texture*);
 int gameLoop(SDL_Window *, SDL_Renderer *);
 int gameMenu();
-void blit(SDL_Texture *, SDL_Renderer *, int, int);
+void blit(SDL_Texture *, SDL_Renderer *, int, int, PlayerShip*);
 SDL_Texture *loadShipImage(char *, SDL_Renderer *);
 SDL_Point getSize(SDL_Texture *);
 
@@ -102,3 +102,4 @@ int min(int, int);
 
 bool checkWaveStatus(EnemyShip**, int);
 bool spawnRequest(EnemyShip**, int);
+void changeShipColor(PlayerShip*);
