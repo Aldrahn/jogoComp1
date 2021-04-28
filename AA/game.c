@@ -15,6 +15,7 @@
 #define baixo 1
 #define true 1
 #define false 0
+#define colisionDamage 0
 
 typedef int bool;
 
@@ -96,6 +97,7 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend, SDL_Texture* bg)
 	SDL_Rect srcBG = {0,0,1280,720};
 	SDL_Rect dstBG = {0,0,1280,720};
 	SDL_Event ev;
+	int scape = 0;
 
 	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024);
 	Mix_Music* bgm = Mix_LoadMUS("assets/sounds/bgm_title.mp3");
@@ -122,7 +124,8 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend, SDL_Texture* bg)
 			}
 			if(ev.key.keysym.scancode == SDL_SCANCODE_RETURN)
 			{
-				gameLoop(window, rend);
+				scape = gameLoop(window, rend);
+				if(scape != 0){isRunning = false;}
 				Mix_PlayMusic(bgm, -1);
 			}
 
@@ -215,6 +218,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			if (ev.type == SDL_QUIT || ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE)
 			{
 				isRunning = false;
+				return 1;
 			}
 
 			if(pause == false)
@@ -227,7 +231,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 					if (player->ally->fire == 1)
 					{
 						Bullet *bullet = createBullet(player->ally, bulletVector, rend);
-						if(!(Mix_Playing(2)))
+						//if(!(Mix_Playing(2)))
 						{
 							Mix_PlayChannel(2, bulletSound, 0);
 						}	
@@ -309,6 +313,11 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 				}
 			}
 
+			if(player->ally->hp == 0)
+			{
+				//Game Over
+				//break;
+			} 
 			changeShipColor(player);
 
 			//Comeca a proxima wave. Obs.:spawnedIndex +1 == Total de Naves inimigas spawnadas
@@ -673,14 +682,8 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 				printf("Nave %d Fora da tela\n", j);
 				arrayWave[j]->spawned = false;
 			}
-			if(shipColision(player, arrayWave, i))
-			{
-				printf("Empurrando para a direita\n");
-				player->ally->x_axis += 20;
-				player->ally->dstrect.x = player->ally->x_axis;
-			}
 		}
-		else if (arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == esquerda)
+		else if(arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == esquerda)
 		{
 			arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
 			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
@@ -693,14 +696,8 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 				printf("Nave %d Fora da tela\n", j);
 				arrayWave[j]->spawned = false;
 			}
-			if(shipColision(player, arrayWave, i))
-			{
-				printf("Empurrando para a esquerda\n");
-				player->ally->x_axis -= 20;
-				player->ally->dstrect.x = player->ally->x_axis;
-			}
 		}
-		else if (arrayWave[j]->movement == vertical && arrayWave[j]->upDown == cima)
+		else if(arrayWave[j]->movement == vertical && arrayWave[j]->upDown == cima)
 		{
 			arrayWave[j]->enemy->dstrect.y--;
 			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
@@ -713,16 +710,9 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 				printf("Nave %d Fora da tela\n", j);
 				arrayWave[j]->spawned = false;
 			}
-			if(shipColision(player, arrayWave, i))
-			{
-				printf("Empurrando para a cima\n");
-				player->ally->y_axis -= 20;
-				player->ally->dstrect.y = player->ally->y_axis;
-			}
 		}
 		else if (arrayWave[j]->movement == vertical && arrayWave[j]->upDown == baixo)
 		{
-
 			arrayWave[j]->enemy->dstrect.y++;
 			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
 
@@ -734,11 +724,98 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 				printf("Nave %d Fora da tela\n", j);
 				arrayWave[j]->spawned = false;
 			}
-			if(shipColision(player, arrayWave, i))
+		}
+		if(shipColision(player, arrayWave, i))
+		{
+			player->ally->hp -= colisionDamage;
+			if(isPlayerMoving(player) == false)
 			{
-				printf("Empurrando para baixo\n");
-				player->ally->y_axis += 20;
-				player->ally->dstrect.y = player->ally->y_axis;
+				if(arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == direita)
+				{
+					
+					player->ally->x_axis += arrayWave[j]->enemy->speed;
+					player->ally->dstrect.x = player->ally->x_axis;
+				}
+				else if(arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == esquerda)
+				{
+					
+					player->ally->x_axis -= arrayWave[j]->enemy->speed;
+					player->ally->dstrect.x = player->ally->x_axis;
+				}
+				else if(arrayWave[j]->movement == vertical && arrayWave[j]->upDown == cima)
+				{
+					
+					player->ally->y_axis -= arrayWave[j]->enemy->speed;
+					player->ally->dstrect.y = player->ally->y_axis;
+				}
+				else if(arrayWave[j]->movement == vertical && arrayWave[j]->upDown == baixo)
+				{
+					
+					player->ally->y_axis += arrayWave[j]->enemy->speed;
+					player->ally->dstrect.y = player->ally->y_axis;
+				}
+			}
+			else//Player está se movendo
+			{
+				if(player->up == true)
+				{
+					if(player->ally->y_axis - (player->ally->dstrect.h/2)  <= arrayWave[j]->enemy->y_axis - (arrayWave[j]->enemy->dstrect.h/2))
+					{
+						player->ally->y_axis -= arrayWave[j]->enemy->speed;
+						player->ally->dstrect.y = player->ally->y_axis;
+					}
+					else
+					{
+						player->ally->y_axis += arrayWave[j]->enemy->speed;
+						player->ally->dstrect.y = player->ally->y_axis;
+					}
+				}
+				else if(player->left == true)
+				{
+					if(player->ally->x_axis + (player->ally->dstrect.w/2) < arrayWave[j]->enemy->x_axis + (arrayWave[j]->enemy->dstrect.w/2))
+					{
+						player->ally->x_axis -= arrayWave[j]->enemy->speed;
+						player->ally->dstrect.x = player->ally->x_axis;
+					}
+					else
+					{
+						player->ally->x_axis += arrayWave[j]->enemy->speed;
+						player->ally->dstrect.x = player->ally->x_axis;
+					}
+				}
+				else if(player->right == true)
+				{
+					if(player->ally->x_axis + (player->ally->dstrect.w/2) > arrayWave[j]->enemy->x_axis + (arrayWave[j]->enemy->dstrect.w/2))
+					{
+						player->ally->x_axis += arrayWave[j]->enemy->speed;
+						player->ally->dstrect.x = player->ally->x_axis;
+					}
+					else
+					{
+						player->ally->x_axis -= arrayWave[j]->enemy->speed;
+						player->ally->dstrect.x = player->ally->x_axis;
+					}
+				}
+				else if(player->down == true)
+				{
+					if(player->ally->y_axis - (player->ally->dstrect.h/2) >= arrayWave[j]->enemy->y_axis - (arrayWave[j]->enemy->dstrect.h/2))
+					{
+						player->ally->y_axis += arrayWave[j]->enemy->speed;
+						player->ally->dstrect.y = player->ally->y_axis;
+					}
+					else
+					{
+						player->ally->y_axis -= arrayWave[j]->enemy->speed;
+						player->ally->dstrect.y = player->ally->y_axis;
+					}
+				}
+			}
+
+			if(player->ally->x_axis <= 0 || player->ally->y_axis <= 0 || player->ally->x_axis >= WIDTH - player->ally->dstrect.w || player->ally->y_axis >= HEIGHT - player->ally->dstrect.h)
+			{
+				printf("ENTREI\n");
+				player->ally->hp = 0;
+				break;
 			}
 		}
 		
@@ -842,25 +919,7 @@ bool shipColision(PlayerShip *player, EnemyShip **enemies, int spawnedIndex)
 			(max(player->ally->y_axis, enemies[i]->enemy->y_axis) < min(player->ally->y_axis + player->ally->dstrect.h, enemies[i]->enemy->y_axis + enemies[i]->enemy->dstrect.h)))))
 		{
 			
-			printf("Colision!!!-----------\n");
-			if(player->up == true)
-			{
-				player->ally->y_axis += 20;	
-			}
-			else if(player->left == true)
-			{
-				player->ally->x_axis += 20;
-			}
-			else if(player->right == true)
-			{
-				player->ally->x_axis -= 20;
-			}
-			else
-			{
-				player->ally->y_axis -= 20;
-			}
-			
-				
+			printf("Colision!!!-----------\n");	
 			return true;
 		}
 	}
@@ -961,4 +1020,13 @@ void changeShipColor(PlayerShip* player)
 	{
 		player->ally->srcrect.y = 0;
 	}
+}
+
+bool isPlayerMoving(PlayerShip* player)
+{
+	if(player->up == false && player->left == false && player->right == false && player->down == false)
+	{
+		return false;
+	}
+	return true;
 }
