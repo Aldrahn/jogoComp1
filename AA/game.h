@@ -12,6 +12,8 @@
 #define direita 1
 #define cima 0
 #define baixo 1
+#define sequential 0
+#define paralel 1
 #define true 1
 #define false 0
 #define singleShot 0
@@ -44,6 +46,7 @@ typedef struct EnemyShip
 	int pointsWorth;
 	int type;
 	bool spawned;
+	int spawnType;
 	Ship* enemy;
 } EnemyShip;
 
@@ -81,7 +84,7 @@ void blit(SDL_Texture *, SDL_Renderer *, int, int, PlayerShip*);
 SDL_Texture *loadShipImage(char *, SDL_Renderer *);
 SDL_Point getSize(SDL_Texture *);
 
-EnemyShip* createEnemyShip(int, int, int, int, int, int);
+EnemyShip* createEnemyShip(int, int, int, int, int, int, int);
 PlayerShip *createPlayerShip(SDL_Renderer *);
 Bullet *createBullet(Ship *, BulletVector *, SDL_Renderer *);
 BulletVector *createBulletVector(void);
@@ -104,3 +107,5 @@ bool checkWaveStatus(EnemyShip**, int);
 bool spawnRequest(EnemyShip**, int);
 void changeShipColor(PlayerShip*);
 bool isPlayerMoving(PlayerShip*);
+EnemyShip** waveLoader(EnemyShip**, int*, int);
+PlayerShip* playerRule(PlayerShip* player);
