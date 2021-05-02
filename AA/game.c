@@ -218,9 +218,9 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 				switch(ev.type)
 				{
 					case SDL_KEYDOWN:
-						player = movePlayer(doKeyDown(&ev.key, player), arrayWave, spawnedIndex);
-						blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis, player);
-
+						
+						player = doKeyDown(&ev.key, player);
+						
 						if (player->ally->fire == 1)
 						{
 							Bullet *bullet = createBullet(player->ally, bulletVector, rend);
@@ -229,11 +229,12 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 								Mix_PlayChannel(2, bulletSound, 0);
 							}	
 						}
+						
 						break;
 
 					case SDL_KEYUP:
 					{
-						player = movePlayer(doKeyUp(&ev.key, player), arrayWave, spawnedIndex);
+						player = doKeyUp(&ev.key, player);
 						break;
 					}
 				}
@@ -260,6 +261,9 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 				player->ally->hp -= 10;
 			}
 		}
+
+		player = movePlayer(player, arrayWave, spawnedIndex);
+		blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis, player);
 
 		if(pause == false)
 		{
