@@ -74,9 +74,10 @@ typedef struct BulletVector
 } BulletVector;
 
 int startGameScreen();
-int gameLoop(SDL_Window *, SDL_Renderer *, SDL_Texture *);
+bool startMenu(SDL_Window*, SDL_Renderer*, SDL_Texture*);
+int gameLoop(SDL_Window *, SDL_Renderer *);
 int gameMenu();
-void blit(SDL_Texture *, SDL_Renderer *, int, int);
+void blit(SDL_Texture *, SDL_Renderer *, int, int, PlayerShip*);
 SDL_Texture *loadShipImage(char *, SDL_Renderer *);
 SDL_Point getSize(SDL_Texture *);
 
@@ -85,15 +86,15 @@ PlayerShip *createPlayerShip(SDL_Renderer *);
 Bullet *createBullet(Ship *, BulletVector *, SDL_Renderer *);
 BulletVector *createBulletVector(void);
 
-EnemyShip **moveEnemies(EnemyShip **, int);
-PlayerShip *movePlayer(PlayerShip *, EnemyShip **);
+EnemyShip **moveEnemies(EnemyShip **, PlayerShip*, int);
+PlayerShip *movePlayer(PlayerShip *, EnemyShip **, int);
 BulletVector *moveBullet(BulletVector *);
 PlayerShip *doKeyDown(SDL_KeyboardEvent *, PlayerShip *);
 PlayerShip *doKeyUp(SDL_KeyboardEvent *, PlayerShip *);
 
 void addBulletInVector(Bullet *, BulletVector *);
 
-bool shipColision(PlayerShip*, EnemyShip**);
+bool shipColision(PlayerShip*, EnemyShip**, int);
 bool isOffScreen(int, int, EnemyShip*);
 
 int max(int, int);
@@ -101,3 +102,6 @@ int min(int, int);
 
 bool checkWaveStatus(EnemyShip**, int);
 bool spawnRequest(EnemyShip**, int);
+
+void changeShipColor(PlayerShip*);
+bool isPlayerMoving(PlayerShip*);
