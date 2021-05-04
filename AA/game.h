@@ -88,12 +88,13 @@ BulletVector *createBulletVector(void);
 
 EnemyShip **moveEnemies(EnemyShip **, PlayerShip*, int);
 PlayerShip *movePlayer(PlayerShip *, EnemyShip **, int);
-BulletVector *moveBullet(BulletVector *);
+BulletVector *moveBullet(BulletVector *,EnemyShip** , PlayerShip* , int );
 PlayerShip *doKeyDown(SDL_KeyboardEvent *, PlayerShip *);
 PlayerShip *doKeyUp(SDL_KeyboardEvent *, PlayerShip *);
 
 void addBulletInVector(Bullet *, BulletVector *);
 
+bool bulletCollision(Ship*, Bullet* );
 bool shipColision(PlayerShip*, EnemyShip**, int);
 bool isOffScreen(int, int, EnemyShip*);
 
@@ -104,3 +105,4 @@ bool checkWaveStatus(EnemyShip**, int);
 bool spawnRequest(EnemyShip**, int);
 void changeShipColor(PlayerShip*);
 bool isPlayerMoving(PlayerShip*);
+void score(int*);

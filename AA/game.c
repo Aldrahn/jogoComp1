@@ -16,6 +16,7 @@
 #define true 1
 #define false 0
 #define colisionDamage 0
+#define BULLET_DAMAGE 5
 
 typedef int bool;
 
@@ -266,7 +267,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 
 		if(pause == false)
 		{
-
 			//Garante que todos os inimigos continuem se movendo
 			arrayWave = moveEnemies(arrayWave, player, spawnedIndex);
 
@@ -304,7 +304,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			}
 
 			//Movimentação das balas
-			bulletVector = moveBullet(bulletVector);
+			bulletVector = moveBullet(bulletVector, arrayWave, player, spawnedIndex);
 			for (int i = 0; i < bulletVector->firstEmpty; i++)
 			{
 				if (bulletVector->bullets[i] != NULL)
@@ -360,7 +360,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 
 	for (int i = 0; i < waveRegister[0]; i++)
 	{
-
 		free(arrayWave[i]->enemy);
 		free(arrayWave[i]);
 	}
@@ -372,81 +371,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 	Mix_FreeChunk(bulletSound);
 
 	return 0;
-}
-
-EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown, int leftRight)
-{
-	EnemyShip *new = (EnemyShip *)malloc(sizeof(EnemyShip));
-	new->enemy = (Ship *)malloc(sizeof(Ship));
-
-	if (enemyType == 1)
-	{
-		new->enemy->hp = 100;
-		new->enemy->speed = 4;
-		new->enemy->x_axis = x;
-		new->enemy->y_axis = y;
-		new->pointsWorth = 25;
-		new->movement = movement;
-		new->upDown = upDown;
-		new->leftRight = leftRight;
-		SDL_Rect a = {1, 1, 350, 390};
-		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 50, 50};
-		new->enemy->srcrect = a;
-		new->enemy->dstrect = b;
-		new->spawned = false;
-	}
-
-	else if (enemyType == 2)
-	{
-		new->enemy->hp = 250;
-		new->enemy->speed = 3;
-		new->enemy->x_axis = x;
-		new->enemy->y_axis = y;
-		new->pointsWorth = 50;
-		new->movement = movement;
-		new->upDown = upDown;
-		new->leftRight = leftRight;
-		SDL_Rect a = {1, 460, 450, 480};
-		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 90, 90};
-		new->enemy->srcrect = a;
-		new->enemy->dstrect = b;
-		new->spawned = false;
-	}
-
-	else if (enemyType == 3)
-	{
-		new->enemy->hp = 500;
-		new->enemy->speed = 2;
-		new->enemy->x_axis = x;
-		new->enemy->y_axis = y;
-		new->pointsWorth = 100;
-		new->movement = movement;
-		new->upDown = upDown;
-		new->leftRight = leftRight;
-		SDL_Rect a = {1, 950, 350, 700};
-		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 65, 130};
-		new->enemy->srcrect = a;
-		new->enemy->dstrect = b;
-		new->spawned = false;
-	}
-
-	else if (enemyType == 4)
-	{
-		new->enemy->hp = 1000;
-		new->enemy->speed = 1;
-		new->enemy->x_axis = x;
-		new->enemy->y_axis = y;
-		new->pointsWorth = 200;
-		new->movement = movement;
-		new->upDown = upDown;
-		new->leftRight = leftRight;
-		SDL_Rect a = {1, 1700, 800, 700};
-		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 130, 110};
-		new->enemy->srcrect = a;
-		new->enemy->dstrect = b;
-		new->spawned = false;
-	}
-	return new;
 }
 
 SDL_Texture *loadShipImage(char *shipFilename, SDL_Renderer *renderer)
@@ -478,6 +402,7 @@ void blit(SDL_Texture *texture, SDL_Renderer *renderer, int x, int y, PlayerShip
 	}
 }
 
+//funcionamento player
 PlayerShip *createPlayerShip(SDL_Renderer *renderer)
 {
 	
@@ -599,6 +524,81 @@ PlayerShip *movePlayer(PlayerShip *player, EnemyShip **enemies, int spawnedIndex
 }
 
 //funcionamento do inimigo
+EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown, int leftRight)
+{
+	EnemyShip *new = (EnemyShip *)malloc(sizeof(EnemyShip));
+	new->enemy = (Ship *)malloc(sizeof(Ship));
+
+	if (enemyType == 1)
+	{
+		new->enemy->hp = 100;
+		new->enemy->speed = 4;
+		new->enemy->x_axis = x;
+		new->enemy->y_axis = y;
+		new->pointsWorth = 25;
+		new->movement = movement;
+		new->upDown = upDown;
+		new->leftRight = leftRight;
+		SDL_Rect a = {1, 1, 350, 390};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 50, 50};
+		new->enemy->srcrect = a;
+		new->enemy->dstrect = b;
+		new->spawned = false;
+	}
+
+	else if (enemyType == 2)
+	{
+		new->enemy->hp = 250;
+		new->enemy->speed = 3;
+		new->enemy->x_axis = x;
+		new->enemy->y_axis = y;
+		new->pointsWorth = 50;
+		new->movement = movement;
+		new->upDown = upDown;
+		new->leftRight = leftRight;
+		SDL_Rect a = {1, 460, 450, 480};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 90, 90};
+		new->enemy->srcrect = a;
+		new->enemy->dstrect = b;
+		new->spawned = false;
+	}
+
+	else if (enemyType == 3)
+	{
+		new->enemy->hp = 500;
+		new->enemy->speed = 2;
+		new->enemy->x_axis = x;
+		new->enemy->y_axis = y;
+		new->pointsWorth = 100;
+		new->movement = movement;
+		new->upDown = upDown;
+		new->leftRight = leftRight;
+		SDL_Rect a = {1, 950, 350, 700};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 65, 130};
+		new->enemy->srcrect = a;
+		new->enemy->dstrect = b;
+		new->spawned = false;
+	}
+
+	else if (enemyType == 4)
+	{
+		new->enemy->hp = 1000;
+		new->enemy->speed = 1;
+		new->enemy->x_axis = x;
+		new->enemy->y_axis = y;
+		new->pointsWorth = 200;
+		new->movement = movement;
+		new->upDown = upDown;
+		new->leftRight = leftRight;
+		SDL_Rect a = {1, 1700, 800, 700};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 130, 110};
+		new->enemy->srcrect = a;
+		new->enemy->dstrect = b;
+		new->spawned = false;
+	}
+	return new;
+}
+
 EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 {
 
@@ -829,7 +829,7 @@ Bullet *createBullet(Ship *source, BulletVector *bulletVector, SDL_Renderer *ren
 {
 	Bullet *bullet = (Bullet *)malloc(sizeof(Bullet));
 
-	bullet->speed = 5;
+	bullet->speed = 10;
 	bullet->damage = 1;
 	bullet->x_axis = source->x_axis;
 	bullet->y_axis = source->y_axis - 45;
@@ -868,29 +868,40 @@ BulletVector *createBulletVector(void)
 	return bulletVector;
 }
 
-BulletVector *moveBullet(BulletVector *bulletVector)
+BulletVector *moveBullet(BulletVector *bulletVector, EnemyShip** arrayWave, PlayerShip* player, int spawnedIndex)
 {
 	int firstEmpty = bulletVector->firstEmpty;
 	int removed = 0;
+	Bullet* bullet = NULL;
 
 	for (int i = 0; i < firstEmpty; i++)
 	{
-		if (bulletVector->bullets[i]->owner->isPlayer)
+		bullet = bulletVector->bullets[i];
+		if (bullet->owner->isPlayer)
 		{
-			bulletVector->bullets[i]->y_axis -= bulletVector->bullets[i]->speed;
+			bullet->y_axis -= bullet->speed;
+			for(int enemy_index = 0; enemy_index < spawnedIndex + 1; enemy_index++) {
+				if (bulletCollision(arrayWave[enemy_index]->enemy, bullet) || bullet->y_axis <= -HEIGHT_BULLET) {
+					arrayWave[enemy_index]->spawned = false;
+					removed += 1;
+					free(bullet);
+					bulletVector->bullets[i] = NULL;
+					break;
+				}
+			}
 		}
 		else
 		{
-			bulletVector->bullets[i]->y_axis += bulletVector->bullets[i]->speed;
-		}
-
-		if (bulletVector->bullets[i]->y_axis <= -HEIGHT_BULLET)
-		{
-			free(bulletVector->bullets[i]);
-			bulletVector->bullets[i] = NULL;
-			removed += 1;
+			bullet->y_axis += bullet->speed;
+			if(bulletCollision(player->ally, bullet) || bulletVector->bullets[i]->x_axis >= HEIGHT_BULLET) {
+				player->ally->hp -= BULLET_DAMAGE;
+				removed += 1;
+				free(bullet);
+				bulletVector->bullets[i] = NULL;
+			}
 		}
 	}
+
 	for (int j = 0; j < removed; j++)
 	{
 		for (int i = 0; i < firstEmpty; i++)
@@ -904,9 +915,29 @@ BulletVector *moveBullet(BulletVector *bulletVector)
 			}
 		}
 	}
+
 	bulletVector->firstEmpty = firstEmpty;
 
 	return bulletVector;
+}
+
+bool bulletCollision(Ship* ship, Bullet* bullet){
+	SDL_Rect dest;
+
+	dest.x = bullet->x_axis;
+	dest.y = bullet->y_axis;
+
+	SDL_QueryTexture(bullet->texture, NULL, NULL, &dest.w, &dest.h);
+
+	if ((max(bullet->x_axis, ship->x_axis) < min(bullet->x_axis + dest.w, ship->x_axis + ship->dstrect.w)) &&
+		(max(bullet->y_axis, ship->y_axis) < min(bullet->y_axis + dest.h, ship->y_axis + ship->dstrect.h)))
+	{
+		printf("Colision bullet!!!-----------\n");	
+		return true;
+	}
+
+
+	return false;
 }
 
 //funções auxiliares
@@ -914,12 +945,11 @@ bool shipColision(PlayerShip *player, EnemyShip **enemies, int spawnedIndex)
 {
 	for (int i = 0; i < spawnedIndex + 1; i++)
 	{
-		if (enemies[i]->spawned == true &&
+		if (enemies[i]->spawned == true && 
 			(((max(player->ally->x_axis, enemies[i]->enemy->x_axis) < min(player->ally->x_axis + player->ally->dstrect.w, enemies[i]->enemy->x_axis + enemies[i]->enemy->dstrect.w)) &&
 			(max(player->ally->y_axis, enemies[i]->enemy->y_axis) < min(player->ally->y_axis + player->ally->dstrect.h, enemies[i]->enemy->y_axis + enemies[i]->enemy->dstrect.h)))))
-		{
-			
-			printf("Colision!!!-----------\n");	
+		{	
+			printf("Colision nave!!!-----------\n");	
 			return true;
 		}
 	}
@@ -1029,4 +1059,33 @@ bool isPlayerMoving(PlayerShip* player)
 		return false;
 	}
 	return true;
+}
+
+void score(int *recorde)
+{
+    FILE *arq;
+    int recorde_aux[11];
+    int i, pos;
+    int recordes[10];
+    arq = fopen("score.txt", "r");
+    fscanf(arq, "%d", &recordes[i]);
+    while (!feof(arq))
+    {
+        i++;
+        fscanf(arq, "%d", &recordes[i]);
+    }
+    recordes[10] = *recorde;
+    for (i = 0; i < 11; i++)
+    {
+		if(recorde_aux[i] > recordes[i]){
+			recordes[i] = recorde_aux[i];
+		}	
+    }
+    fclose(arq);
+    arq = fopen("score.txt", "w");
+    for (i = 0; i < 10; i++)
+    {
+        fprintf(arq, "%d ", recordes[i]);
+    }
+    fclose(arq);
 }
