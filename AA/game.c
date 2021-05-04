@@ -50,7 +50,7 @@ int startGameScreen()
 	IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
 
 	//Criando Surface
-	SDL_Surface *surface = IMG_Load("assets/menu/bg4.png");
+	SDL_Surface *surface = IMG_Load("assets/menu/game_screen.png");
 	if (!surface)
 	{
 		printf("error creating surface\n");
@@ -202,7 +202,11 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 					{
 						arrayWave[i] = createEnemyShip(2, 500, 720, vertical, cima, -1);
 					}
+				}
+				else
+				{
 					arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda);
+				}
 			}
 			loadNextWave = false;
 		}
@@ -364,10 +368,12 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 	free(player->ally);
 	free(player);
 	Mix_FreeMusic(bgm);
+	Mix_FreeChunk(jetTurbine);
+	Mix_FreeChunk(bulletSound);
 
 	return 0;
+}
 
-}}
 EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown, int leftRight)
 {
 	EnemyShip *new = (EnemyShip *)malloc(sizeof(EnemyShip));

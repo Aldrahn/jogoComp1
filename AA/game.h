@@ -102,6 +102,5 @@ int min(int, int);
 
 bool checkWaveStatus(EnemyShip**, int);
 bool spawnRequest(EnemyShip**, int);
-
 void changeShipColor(PlayerShip*);
 bool isPlayerMoving(PlayerShip*);
