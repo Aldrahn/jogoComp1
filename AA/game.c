@@ -1,25 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "game.h"
-#include "SDL2/SDL.h"
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_mixer.h>
-#include <string.h>
-#define horizontal 0
-#define vertical 1
-#define diagonal 2
-#define esquerda 0
-#define direita 1
-#define sequential 0
-#define paralel 1
-#define cima 0
-#define baixo 1
-#define true 1
-#define false 0
-#define colisionDamage 0
-
-typedef int bool;
 
 int startGameScreen()
 {
@@ -203,6 +182,16 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 		{
 			arrayWave = waveLoader(arrayWave, waveRegister, waveCounter);
 			loadNextWave = false;
+		}
+
+		//checa a invencibilidade do player
+		bool invWindow = isInvincible(player->invincibilityTimeStart);
+		
+		if (player->invincible == true && invWindow == true)
+		{
+			printf("Player is no longer invincible!\n");
+			player->invincibilityTimeStart = -1;
+			player->invincible = false;
 		}
 
 		while (SDL_PollEvent(&ev) != 0)
@@ -546,12 +535,17 @@ PlayerShip *createPlayerShip(SDL_Renderer *renderer)
 	
 	PlayerShip *player = (PlayerShip *)malloc(sizeof(PlayerShip));
 
+	player->invincible = false;
 	player->ally = (Ship *)malloc(sizeof(Ship));
 	player->ally->hp = 100;
 	player->ally->x_axis = 590;
 	player->ally->y_axis = 600;
 	player->ally->speed = 6;
 	player->ally->isPlayer = 1;
+	player->up = 0;
+	player->down = 0;
+	player->left = 0;
+	player->right = 0;
 	player->ally->texture = loadShipImage("assets/objects/player_sheet.png", renderer);
 	SDL_Rect a = {0,0, 230, 280};
 	SDL_Rect b = {player->ally->x_axis, player->ally->y_axis, 100, 135};
@@ -634,34 +628,83 @@ PlayerShip *doKeyUp(SDL_KeyboardEvent *event, PlayerShip *player)
 PlayerShip *movePlayer(PlayerShip *player, EnemyShip **enemies, int spawnedIndex)
 {
 
-	if (player->up && player->ally->y_axis >= 0 && shipColision(player, enemies, spawnedIndex) == false)
-	{
-		player->ally->y_axis -= player->ally->speed;
-		player->ally->dstrect.y = player->ally->y_axis;
-		player->ally->srcrect.x = 210; //Muda animacao para propulsao
+	if(player->invincible == true){
+
+		if (player->up && player->ally->y_axis >= 0)
+		{
+			player->ally->y_axis -= player->ally->speed;
+			player->ally->dstrect.y = player->ally->y_axis;
+			player->ally->srcrect.x = 210; //Muda animacao para propulsao
+		}
+
+		else if (player->down && player->ally->y_axis <= HEIGHT - player->ally->dstrect.h)
+		{
+			player->ally->y_axis += player->ally->speed;
+			player->ally->dstrect.y = player->ally->y_axis;
+			player->ally->srcrect.x = 0;//Muda animacao para sem propulsao
+		}
+
+		else if (player->left && player->ally->x_axis >= 0)
+		{
+			player->ally->x_axis -= player->ally->speed;
+			player->ally->dstrect.x = player->ally->x_axis;
+			player->ally->srcrect.x = 630;//Muda animacao para desvio para esquerda
+		}
+
+		else if (player->right && player->ally->x_axis <= WIDTH - player->ally->dstrect.w)
+		{
+			player->ally->x_axis += player->ally->speed;
+			player->ally->dstrect.x = player->ally->x_axis;
+			player->ally->srcrect.x = 840;//Muda animacao para desvio para direita
+		}
 	}
 
-	if (player->down && player->ally->y_axis <= HEIGHT - 46 && shipColision(player, enemies, spawnedIndex) == false)
-	{
-		player->ally->y_axis += player->ally->speed;
-		player->ally->dstrect.y = player->ally->y_axis;
-		player->ally->srcrect.x = 0;//Muda animacao para sem propulsao
-	}
+	else{
 
-	if (player->left && player->ally->x_axis >= 0 && shipColision(player, enemies, spawnedIndex) == false)
-	{
-		player->ally->x_axis -= player->ally->speed;
-		player->ally->dstrect.x = player->ally->x_axis;
-		player->ally->srcrect.x = 630;//Muda animacao para desvio para esquerda
-	}
+		if (player->up && player->ally->y_axis >= 0 && shipColision(player, enemies, spawnedIndex) == false)
+		{
+			player->ally->y_axis -= player->ally->speed;
+			player->ally->dstrect.y = player->ally->y_axis;
+			player->ally->srcrect.x = 210; //Muda animacao para propulsao
+		}
 
-	if (player->right && player->ally->x_axis <= WIDTH - 48 && shipColision(player, enemies, spawnedIndex) == false)
-	{
-		player->ally->x_axis += player->ally->speed;
-		player->ally->dstrect.x = player->ally->x_axis;
-		player->ally->srcrect.x = 840;//Muda animacao para desvio para direita
-	}
+		else if (player->down && player->ally->y_axis <= HEIGHT - player->ally->dstrect.h && shipColision(player, enemies, spawnedIndex) == false)
+		{
+			player->ally->y_axis += player->ally->speed;
+			player->ally->dstrect.y = player->ally->y_axis;
+			player->ally->srcrect.x = 0;//Muda animacao para sem propulsao
+		}
 
+		else if (player->left && player->ally->x_axis >= 0 && shipColision(player, enemies, spawnedIndex) == false)
+		{
+			player->ally->x_axis -= player->ally->speed;
+			player->ally->dstrect.x = player->ally->x_axis;
+			player->ally->srcrect.x = 630;//Muda animacao para desvio para esquerda
+		}
+
+		else if (player->right && player->ally->x_axis <= WIDTH - player->ally->dstrect.w && shipColision(player, enemies, spawnedIndex) == false)
+		{
+			player->ally->x_axis += player->ally->speed;
+			player->ally->dstrect.x = player->ally->x_axis;
+			player->ally->srcrect.x = 840;//Muda animacao para desvio para direita
+		}
+
+		else if(shipColision(player, enemies, spawnedIndex))
+		{
+			/*player->ally->x_axis = 590;
+			player->ally->y_axis = 600;
+			player->ally->dstrect.x = 590;
+			player->ally->dstrect.y = 600;
+			player->ally->hp -= 20;
+			player->ally->invincible = true;
+			*/
+			
+			player->invincible = true;
+			player->ally->hp -= 20;
+			time(&(player->invincibilityTimeStart));
+			printf("Player is invincible!\nstarted in second %ld\n", player->invincibilityTimeStart);
+		}
+	}
 	return player;
 }
 
@@ -785,14 +828,6 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 					arrayWave[j]->spawned = false;
 				}
 			}
-		}
-		if(shipColision(player, arrayWave, i))
-		{
-			player->ally->x_axis = 590;
-			player->ally->y_axis = 600;
-			player->ally->dstrect.x = 590;
-			player->ally->dstrect.y = 600;
-			player->ally->hp -= 20;
 		}
 	}
 	return arrayWave;
@@ -1301,4 +1336,18 @@ PlayerShip* playerRule(PlayerShip* player)
 		}
 	}
 	return player;
+}
+
+bool isInvincible(time_t start)
+{
+	time_t end;
+	time(&end);
+	int seconds = (int)(end - start);
+
+	if(seconds == 2){
+		printf("difference is %d seconds!\n", seconds);
+		return true;
+	}
+
+	return false;
 }

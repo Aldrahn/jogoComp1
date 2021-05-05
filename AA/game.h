@@ -17,6 +17,7 @@
 #define paralel 1
 #define true 1
 #define false 0
+#define colisionDamage 0
 #define singleShot 0
 #define LEN_BULLET 1000
 #define WIDTH 1280
@@ -64,6 +65,8 @@ typedef struct
 	int down;
 	int left;
 	int right;
+	bool invincible;
+	time_t invincibilityTimeStart;
 	Ship *ally;
 } PlayerShip;
 
@@ -117,4 +120,5 @@ void changeShipColor(PlayerShip*);
 bool isPlayerMoving(PlayerShip*);
 bool shouldEnemyMove(EnemyShip*);
 EnemyShip** waveLoader(EnemyShip**, int*, int);
-PlayerShip* playerRule(PlayerShip* player);
+PlayerShip* playerRule(PlayerShip*);
+bool isInvincible(time_t);
