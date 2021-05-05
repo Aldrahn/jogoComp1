@@ -19,6 +19,7 @@
 #define false 0
 #define colisionDamage 0
 #define singleShot 0
+#define BULLET_DAMAGE 5
 #define LEN_BULLET 1000
 #define WIDTH 1280
 #define HEIGHT 720
@@ -102,12 +103,13 @@ BulletVector *createBulletVector(void);
 
 EnemyShip **moveEnemies(EnemyShip **, PlayerShip*, int);
 PlayerShip *movePlayer(PlayerShip *, EnemyShip **, int);
-BulletVector *moveBullet(BulletVector *);
+BulletVector *moveBullet(BulletVector *,EnemyShip** , PlayerShip* , int );
 PlayerShip *doKeyDown(SDL_KeyboardEvent *, PlayerShip *);
 PlayerShip *doKeyUp(SDL_KeyboardEvent *, PlayerShip *);
 
 void addBulletInVector(Bullet *, BulletVector *);
 
+bool bulletCollision(Ship*, Bullet* );
 bool shipColision(PlayerShip*, EnemyShip**, int);
 bool isOffScreen(int, int, EnemyShip*);
 
@@ -122,3 +124,4 @@ bool shouldEnemyMove(EnemyShip*);
 EnemyShip** waveLoader(EnemyShip**, int*, int);
 PlayerShip* playerRule(PlayerShip*);
 bool isInvincible(time_t);
+void score(int*);

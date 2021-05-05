@@ -307,7 +307,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			}
 
 			//Movimentação das balas
-			bulletVector = moveBullet(bulletVector);
+			bulletVector = moveBullet(bulletVector, arrayWave, player, spawnedIndex);
 			for (int i = 0; i < bulletVector->firstEmpty; i++)
 			{
 				if (bulletVector->bullets[i] != NULL)
@@ -359,7 +359,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 
 	for (int i = 0; i < waveRegister[0]; i++)
 	{
-
 		free(arrayWave[i]->enemy);
 		free(arrayWave[i]);
 	}
@@ -530,6 +529,7 @@ void blit(SDL_Texture *texture, SDL_Renderer *renderer, int x, int y, PlayerShip
 	}
 }
 
+//funcionamento player
 PlayerShip *createPlayerShip(SDL_Renderer *renderer)
 {
 	
@@ -838,7 +838,7 @@ Bullet *createBullet(Ship *source, BulletVector *bulletVector, SDL_Renderer *ren
 {
 	Bullet *bullet = (Bullet *)malloc(sizeof(Bullet));
 
-	bullet->speed = 5;
+	bullet->speed = 10;
 	bullet->damage = 1;
 	bullet->x_axis = source->x_axis;
 	bullet->y_axis = source->y_axis - 45;
@@ -877,29 +877,40 @@ BulletVector *createBulletVector(void)
 	return bulletVector;
 }
 
-BulletVector *moveBullet(BulletVector *bulletVector)
+BulletVector *moveBullet(BulletVector *bulletVector, EnemyShip** arrayWave, PlayerShip* player, int spawnedIndex)
 {
 	int firstEmpty = bulletVector->firstEmpty;
 	int removed = 0;
+	Bullet* bullet = NULL;
 
 	for (int i = 0; i < firstEmpty; i++)
 	{
-		if (bulletVector->bullets[i]->owner->isPlayer)
+		bullet = bulletVector->bullets[i];
+		if (bullet->owner->isPlayer)
 		{
-			bulletVector->bullets[i]->y_axis -= bulletVector->bullets[i]->speed;
+			bullet->y_axis -= bullet->speed;
+			for(int enemy_index = 0; enemy_index < spawnedIndex + 1; enemy_index++) {
+				if (bulletCollision(arrayWave[enemy_index]->enemy, bullet) || bullet->y_axis <= -HEIGHT_BULLET) {
+					arrayWave[enemy_index]->spawned = false;
+					removed += 1;
+					free(bullet);
+					bulletVector->bullets[i] = NULL;
+					break;
+				}
+			}
 		}
 		else
 		{
-			bulletVector->bullets[i]->y_axis += bulletVector->bullets[i]->speed;
-		}
-
-		if (bulletVector->bullets[i]->y_axis <= -HEIGHT_BULLET)
-		{
-			free(bulletVector->bullets[i]);
-			bulletVector->bullets[i] = NULL;
-			removed += 1;
+			bullet->y_axis += bullet->speed;
+			if(bulletCollision(player->ally, bullet) || bulletVector->bullets[i]->x_axis >= HEIGHT_BULLET) {
+				player->ally->hp -= BULLET_DAMAGE;
+				removed += 1;
+				free(bullet);
+				bulletVector->bullets[i] = NULL;
+			}
 		}
 	}
+
 	for (int j = 0; j < removed; j++)
 	{
 		for (int i = 0; i < firstEmpty; i++)
@@ -913,9 +924,29 @@ BulletVector *moveBullet(BulletVector *bulletVector)
 			}
 		}
 	}
+
 	bulletVector->firstEmpty = firstEmpty;
 
 	return bulletVector;
+}
+
+bool bulletCollision(Ship* ship, Bullet* bullet){
+	SDL_Rect dest;
+
+	dest.x = bullet->x_axis;
+	dest.y = bullet->y_axis;
+
+	SDL_QueryTexture(bullet->texture, NULL, NULL, &dest.w, &dest.h);
+
+	if ((max(bullet->x_axis, ship->x_axis) < min(bullet->x_axis + dest.w, ship->x_axis + ship->dstrect.w)) &&
+		(max(bullet->y_axis, ship->y_axis) < min(bullet->y_axis + dest.h, ship->y_axis + ship->dstrect.h)))
+	{
+		printf("Colision bullet!!!-----------\n");	
+		return true;
+	}
+
+
+	return false;
 }
 
 //funções auxiliares
@@ -923,11 +954,10 @@ bool shipColision(PlayerShip* player, EnemyShip** enemies, int spawnedIndex)
 {
 	for (int i = 0; i < spawnedIndex + 1; i++)
 	{
-		if (enemies[i]->spawned == true &&
+		if (enemies[i]->spawned == true && 
 			(((max(player->ally->x_axis, enemies[i]->enemy->x_axis) < min(player->ally->x_axis + player->ally->dstrect.w, enemies[i]->enemy->x_axis + enemies[i]->enemy->dstrect.w)) &&
 			(max(player->ally->y_axis, enemies[i]->enemy->y_axis) < min(player->ally->y_axis + player->ally->dstrect.h, enemies[i]->enemy->y_axis + enemies[i]->enemy->dstrect.h)))))
 		{
-			
 			return true;
 		}
 	}
@@ -1301,43 +1331,6 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 	return arrayWave;
 }
 
-PlayerShip* playerRule(PlayerShip* player)
-{
-	if(player->up == true)
-	{
-		if(player->ally->y_axis <= HEIGHT - player->ally->srcrect.h)
-		{
-			player->ally->y_axis += 20;
-			player->ally->dstrect.y = player->ally->y_axis;
-		}
-	}
-	else if(player->left == true)
-	{
-		if(player->ally->x_axis <= WIDTH - player->ally->srcrect.w)
-		{
-			player->ally->x_axis += 20;
-			player->ally->dstrect.x = player->ally->x_axis;
-		}
-	}
-	else if(player->right == true)
-	{
-		if(player->ally->x_axis > 0)
-		{
-			player->ally->x_axis -= 20;
-			player->ally->dstrect.x = player->ally->x_axis;
-		}
-	}
-	else if(player->down == true)
-	{
-		if(player->ally->y_axis > 0)
-		{
-			player->ally->y_axis -= 20;
-			player->ally->dstrect.y = player->ally->y_axis;
-		}
-	}
-	return player;
-}
-
 bool isInvincible(time_t start)
 {
 	time_t end;
@@ -1350,4 +1343,33 @@ bool isInvincible(time_t start)
 	}
 
 	return false;
+}
+
+void score(int *recorde)
+{
+    FILE *arq;
+    int recorde_aux[11];
+    int i, pos;
+    int recordes[10];
+    arq = fopen("score.txt", "r");
+    fscanf(arq, "%d", &recordes[i]);
+    while (!feof(arq))
+    {
+        i++;
+        fscanf(arq, "%d", &recordes[i]);
+    }
+    recordes[10] = *recorde;
+    for (i = 0; i < 11; i++)
+    {
+		if(recorde_aux[i] > recordes[i]){
+			recordes[i] = recorde_aux[i];
+		}	
+    }
+    fclose(arq);
+    arq = fopen("score.txt", "w");
+    for (i = 0; i < 10; i++)
+    {
+        fprintf(arq, "%d ", recordes[i]);
+    }
+    fclose(arq);
 }
