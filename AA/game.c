@@ -167,7 +167,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 	int waveCounter = 0;
 	int spawnedIndex = 0;
 	//wave Register: Quantas naves existem por wave
-	int waveRegister[20] = {7, 7, 8, 10, 18, 4, 8, 16, 10, 6, 20, 20, 15, 20, 20, 5, 8, 9, 6, 10};
+	int waveRegister[20] = {7, 7, 8, 10, 18, 16, 4, 4, 16, 8, 20, 1, 20, 15, 20, 2, 8, 9, 4, 1};
 	//As 5 ultimas waves, são as da Boss Fight (Precisam ficar em loop até o boss morrer)
 
 	EnemyShip **arrayWave = (EnemyShip **)malloc(20 * sizeof(EnemyShip *));
@@ -176,8 +176,9 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 	SDL_Event ev;
 	SDL_Texture *enemyShipsSheet = loadShipImage("assets/objects/enemiessheets.png", rend);
 	SDL_Texture *explosions = loadShipImage("assets/objects/explosion.png", rend);
+	SDL_Texture *bossSheet = loadShipImage("assets/objects/boss_1.png", rend);
 	SDL_Texture *pause_overlay = loadShipImage("assets/menu/pause_screen.png", rend);
-
+	
 	//Retângulos do BG
 	SDL_Texture *bg = loadShipImage("assets/menu/bg4.png", rend);
 	SDL_Rect a_BG = {0, 1080, 1920, 1080};
@@ -213,32 +214,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 				return 1;
 			}
 
-			if(pause == false)
-			{
-				switch(ev.type)
-				{
-					case SDL_KEYDOWN:
-						player = movePlayer(doKeyDown(&ev.key, player), arrayWave, spawnedIndex);
-						blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis, player);
-
-						if (player->ally->fire == 1)
-						{
-							Bullet *bullet = createBullet(player->ally, bulletVector, rend);
-							//if(!(Mix_Playing(2)))
-							{
-								Mix_PlayChannel(2, bulletSound, 0);
-							}	
-						}
-						break;
-
-					case SDL_KEYUP:
-					{
-						player = movePlayer(doKeyUp(&ev.key, player), arrayWave, spawnedIndex);
-						break;
-					}
-				}
-			}
-
 			if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_P)
 			{
 				if(pause == false)
@@ -255,16 +230,44 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 					Mix_Resume(-1);
 				}
 			}
-			if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_D)
+
+			if(pause == false)
 			{
-				player->ally->hp -= 10;
+				
+				switch(ev.type)
+				{
+					case SDL_KEYDOWN:
+						player = doKeyDown(&ev.key, player);
+						
+						if (player->ally->fire == 1)
+						{
+							Bullet *bullet = createBullet(player->ally, bulletVector, rend);
+							//if(!(Mix_Playing(2)))
+							{
+								Mix_PlayChannel(2, bulletSound, 0);
+							}	
+						}
+						if(ev.key.keysym.scancode == SDL_SCANCODE_J)
+						{
+							waveCounter++;
+							loadNextWave = true;
+							spawnedIndex = 0;
+						}
+						
+						break;
+
+					case SDL_KEYUP:
+						player = doKeyUp(&ev.key, player);
+						break;
+				}
 			}
 		}
 
 		if(pause == false)
 		{
 
-			
+			player = movePlayer(player, arrayWave, spawnedIndex);
+			blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis, player);
 			if(spawnedIndex == 0 && arrayWave[spawnedIndex]->spawnType == paralel){spawnedIndex++;}
 
 			//Libera o spawn do próximo membro da wave
@@ -296,11 +299,18 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			{
 				if (arrayWave[j]->spawned == true)
 				{
-					SDL_RenderCopy(rend, enemyShipsSheet, &arrayWave[j]->enemy->srcrect, &arrayWave[j]->enemy->dstrect);
+					if(waveCounter == 19) //Se chegou na wave do boss
+					{
+						SDL_RenderCopy(rend, bossSheet, &arrayWave[j]->enemy->srcrect, &arrayWave[j]->enemy->dstrect);
+					}
+					else
+					{
+						SDL_RenderCopy(rend, enemyShipsSheet, &arrayWave[j]->enemy->srcrect, &arrayWave[j]->enemy->dstrect);
+					}
 				}
 				if (arrayWave[j]->spawned == false &&
-					arrayWave[j]->enemy->x_axis >= 0 &&
-					arrayWave[j]->enemy->y_axis >= 0 &&
+					arrayWave[j]->enemy->x_axis + arrayWave[j]->enemy->dstrect.w >= 0 &&
+					arrayWave[j]->enemy->y_axis + arrayWave[j]->enemy->dstrect.h>= 0 &&
 					!(isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
 				{
 					arrayWave[j]->spawned = true;
@@ -327,21 +337,15 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			
 
 			//Comeca a proxima wave. Obs.:spawnedIndex +1 == Total de Naves inimigas spawnadas
-			if (spawnedIndex + 1 == waveRegister[waveCounter] && checkWaveStatus(arrayWave, spawnedIndex + 1))
+			if (spawnedIndex + 1 == waveRegister[waveCounter] && checkWaveStatus(arrayWave, spawnedIndex + 1) && waveCounter != 19)
 			{
 				for (int i = 0; i < waveRegister[waveCounter]; i++) //Free na wave passada
 				{
 					if (arrayWave[i] != NULL)
 					{
-						printf("Free!!!! Wave %d\n", waveCounter);
-
 						free(arrayWave[i]->enemy);
 						free(arrayWave[i]);
 					}
-				}
-				if (waveCounter == 19) //Se a wave chegou no fim
-				{
-					waveCounter -= 5; //Volta 5 posicoes
 				}
 				//Atualizando valores
 				waveCounter++;
@@ -380,7 +384,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 	return 0;
 }
 
-EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown, int leftRight, int spawn)
+EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown, int leftRight, int spawn, int distance, int stop)
 {
 	EnemyShip *new = (EnemyShip *)malloc(sizeof(EnemyShip));
 	new->enemy = (Ship *)malloc(sizeof(Ship));
@@ -401,6 +405,8 @@ EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown
 		new->enemy->dstrect = b;
 		new->spawned = false;
 		new->spawnType = spawn;
+		new->dist = distance;
+		new->stopCriteria = 0;
 	}
 
 	else if (enemyType == 2)
@@ -413,12 +419,14 @@ EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown
 		new->movement = movement;
 		new->upDown = upDown;
 		new->leftRight = leftRight;
-		SDL_Rect a = {1, 460, 450, 480};
+		SDL_Rect a = {1, 460, 490, 480};
 		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 90, 90};
 		new->enemy->srcrect = a;
 		new->enemy->dstrect = b;
 		new->spawned = false;
 		new->spawnType = spawn;
+		new->dist = distance;
+		new->stopCriteria = 1;
 	}
 
 	else if (enemyType == 3)
@@ -437,6 +445,8 @@ EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown
 		new->enemy->dstrect = b;
 		new->spawned = false;
 		new->spawnType = spawn;
+		new->dist = distance;
+		new->stopCriteria = 0;
 	}
 
 	else if (enemyType == 4)
@@ -450,12 +460,55 @@ EnemyShip *createEnemyShip(int enemyType, int x, int y, int movement, int upDown
 		new->upDown = upDown;
 		new->leftRight = leftRight;
 		SDL_Rect a = {1, 1700, 800, 700};
-		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 130, 110};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 250, 230};
 		new->enemy->srcrect = a;
 		new->enemy->dstrect = b;
 		new->spawned = false;
 		new->spawnType = spawn;
+		new->dist = distance;
+		new->stopCriteria = 1;
 	}
+	else if(enemyType == 5)
+	{
+		new->enemy->hp = 1000;
+		new->enemy->speed = 1;
+		new->enemy->x_axis = x;
+		new->enemy->y_axis = y;
+		new->pointsWorth = 200;
+		new->movement = movement;
+		new->upDown = upDown;
+		new->leftRight = leftRight;
+		SDL_Rect a = {1, 1, 880, 1021};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 500, 600};
+		new->enemy->srcrect = a;
+		new->enemy->dstrect = b;
+		new->spawned = false;
+		new->spawnType = spawn;
+		new->dist = distance;
+		new->stopCriteria = 1;
+	}
+	else
+	{
+		new->enemy->hp = 250;
+		new->enemy->speed = 3;
+		new->enemy->x_axis = x;
+		new->enemy->y_axis = y;
+		new->pointsWorth = 50;
+		new->movement = movement;
+		new->upDown = upDown;
+		new->leftRight = leftRight;
+		SDL_Rect a = {1, 2400, 490, 480};
+		SDL_Rect b = {new->enemy->x_axis, new->enemy->y_axis, 90, 90};
+		new->enemy->srcrect = a;
+		new->enemy->dstrect = b;
+		new->spawned = false;
+		new->spawnType = spawn;
+		new->dist = distance;
+		new->stopCriteria = 1;
+	}
+
+	new->timeRunning = false;
+	new->stopValue = stop;
 	return new;
 }
 
@@ -497,13 +550,17 @@ PlayerShip *createPlayerShip(SDL_Renderer *renderer)
 	player->ally->hp = 100;
 	player->ally->x_axis = 590;
 	player->ally->y_axis = 600;
-	player->ally->speed = 8;
+	player->ally->speed = 6;
 	player->ally->isPlayer = 1;
 	player->ally->texture = loadShipImage("assets/objects/player_sheet.png", renderer);
 	SDL_Rect a = {0,0, 230, 280};
 	SDL_Rect b = {player->ally->x_axis, player->ally->y_axis, 100, 135};
 	player->ally->srcrect = a;
 	player->ally->dstrect = b;
+	player->up = 0;
+	player->down = 0;
+	player->left = 0;
+	player->right = 0;
 
 	return player;
 }
@@ -613,125 +670,120 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, int i)
 {
 	for (int j = i; j >= 0; j--)
 	{	
-		if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == cima && arrayWave[j]->leftRight == direita)
+		if(shouldEnemyMove(arrayWave[j]))
 		{
-			arrayWave[j]->enemy->dstrect.x += arrayWave[j]->enemy->speed;
-			arrayWave[j]->enemy->dstrect.y--;
-			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
-			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == cima && arrayWave[j]->leftRight == direita)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.x += arrayWave[j]->enemy->speed;
+				arrayWave[j]->enemy->dstrect.y--;
+				arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
+				arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == cima && arrayWave[j]->leftRight == esquerda)
-		{
-			arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
-			arrayWave[j]->enemy->dstrect.y--;
-			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
-			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == cima && arrayWave[j]->leftRight == esquerda)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
+				arrayWave[j]->enemy->dstrect.y--;
+				arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
+				arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == baixo && arrayWave[j]->leftRight == direita)
-		{
-			arrayWave[j]->enemy->dstrect.x += arrayWave[j]->enemy->speed;
-			arrayWave[j]->enemy->dstrect.y++;
-			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
-			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == baixo && arrayWave[j]->leftRight == direita)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.x += arrayWave[j]->enemy->speed;
+				arrayWave[j]->enemy->dstrect.y++;
+				arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
+				arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == baixo && arrayWave[j]->leftRight == esquerda)
-		{
-
-			arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
-			arrayWave[j]->enemy->dstrect.y++;
-			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
-			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if (arrayWave[j]->movement == diagonal && arrayWave[j]->upDown == baixo && arrayWave[j]->leftRight == esquerda)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+
+				arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
+				arrayWave[j]->enemy->dstrect.y++;
+				arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
+				arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if (arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == direita)
-		{
-			arrayWave[j]->enemy->dstrect.x += arrayWave[j]->enemy->speed;
-			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if (arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == direita)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.x += arrayWave[j]->enemy->speed;
+				arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if(arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == esquerda)
-		{
-			arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
-			arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if(arrayWave[j]->movement == horizontal && arrayWave[j]->leftRight == esquerda)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.x -= arrayWave[j]->enemy->speed;
+				arrayWave[j]->enemy->x_axis = arrayWave[j]->enemy->dstrect.x;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if(arrayWave[j]->movement == vertical && arrayWave[j]->upDown == cima)
-		{
-			arrayWave[j]->enemy->dstrect.y--;
-			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if(arrayWave[j]->movement == vertical && arrayWave[j]->upDown == cima)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.y--;
+				arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
-		}
-		else if (arrayWave[j]->movement == vertical && arrayWave[j]->upDown == baixo)
-		{
-			arrayWave[j]->enemy->dstrect.y++;
-			arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
-
-			if (arrayWave[j]->spawned == true &&
-				((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
-				 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
-				 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+			else if (arrayWave[j]->movement == vertical && arrayWave[j]->upDown == baixo)
 			{
-				printf("Nave %d Fora da tela\n", j);
-				arrayWave[j]->spawned = false;
+				arrayWave[j]->enemy->dstrect.y++;
+				arrayWave[j]->enemy->y_axis = arrayWave[j]->enemy->dstrect.y;
+
+				if (arrayWave[j]->spawned == true &&
+					((arrayWave[j]->enemy->y_axis < -1 * arrayWave[j]->enemy->dstrect.h) ||
+					 (arrayWave[j]->enemy->x_axis < -1 * arrayWave[j]->enemy->dstrect.w) ||
+					 isOffScreen(arrayWave[j]->enemy->x_axis, arrayWave[j]->enemy->y_axis, NULL)))
+				{
+					arrayWave[j]->spawned = false;
+				}
 			}
 		}
 		if(shipColision(player, arrayWave, i))
@@ -841,7 +893,6 @@ bool shipColision(PlayerShip* player, EnemyShip** enemies, int spawnedIndex)
 			(max(player->ally->y_axis, enemies[i]->enemy->y_axis) < min(player->ally->y_axis + player->ally->dstrect.h, enemies[i]->enemy->y_axis + enemies[i]->enemy->dstrect.h)))))
 		{
 			
-			printf("Colision!!!-----------\n");	
 			return true;
 		}
 	}
@@ -900,42 +951,30 @@ bool checkWaveStatus(EnemyShip **arrayWave, int total)
 
 bool spawnRequest(EnemyShip **arrayWave, int spawnedIndex)
 {
-	
-	/*for(int i = spawnedIndex; i >= 0; i--)
+	if ((arrayWave[spawnedIndex]->movement == horizontal || arrayWave[spawnedIndex]->movement == diagonal) &&
+		arrayWave[spawnedIndex]->leftRight == direita &&
+		arrayWave[spawnedIndex]->enemy->x_axis > arrayWave[spawnedIndex]->enemy->dstrect.w + arrayWave[spawnedIndex]->dist)
 	{
-		if(arrayWave[i]->spawnType == arrayWave[spawnedIndex + 1]->spawnType)
-		{*/
-			if ((arrayWave[spawnedIndex]->movement == horizontal || arrayWave[spawnedIndex]->movement == diagonal) &&
-				arrayWave[spawnedIndex]->leftRight == direita &&
-				arrayWave[spawnedIndex]->enemy->x_axis > arrayWave[spawnedIndex]->enemy->dstrect.w)
-			{
-				return true;
-			}
-			if ((arrayWave[spawnedIndex]->movement == horizontal || arrayWave[spawnedIndex]->movement == diagonal) &&
-				arrayWave[spawnedIndex]->leftRight == esquerda &&
-				arrayWave[spawnedIndex]->enemy->x_axis < 1280 - arrayWave[spawnedIndex]->enemy->dstrect.w)
-			{
-				return true;
-			}
-			if (arrayWave[spawnedIndex]->movement == vertical &&
-				arrayWave[spawnedIndex]->upDown == cima &&
-				arrayWave[spawnedIndex]->enemy->y_axis < 720 - arrayWave[spawnedIndex]->enemy->dstrect.h)
-			{
-				return true;
-			}
-			if (arrayWave[spawnedIndex]->movement == vertical &&
-				arrayWave[spawnedIndex]->upDown == baixo &&
-				arrayWave[spawnedIndex]->enemy->y_axis > arrayWave[spawnedIndex]->enemy->dstrect.h)
-			{
-				return true;
-			}
-		/*	break;
-		}
-		else
-		{
-			return true;
-		}
-	}*/
+		return true;
+	}
+	if ((arrayWave[spawnedIndex]->movement == horizontal || arrayWave[spawnedIndex]->movement == diagonal) &&
+		arrayWave[spawnedIndex]->leftRight == esquerda &&
+		arrayWave[spawnedIndex]->enemy->x_axis < 1280 - arrayWave[spawnedIndex]->enemy->dstrect.w - arrayWave[spawnedIndex]->dist)
+	{
+		return true;
+	}
+	if (arrayWave[spawnedIndex]->movement == vertical &&
+		arrayWave[spawnedIndex]->upDown == cima &&
+		arrayWave[spawnedIndex]->enemy->y_axis < 720 - arrayWave[spawnedIndex]->enemy->dstrect.h - arrayWave[spawnedIndex]->dist)
+	{
+		return true;
+	}
+	if (arrayWave[spawnedIndex]->movement == vertical &&
+		arrayWave[spawnedIndex]->upDown == baixo &&
+		arrayWave[spawnedIndex]->enemy->y_axis > arrayWave[spawnedIndex]->enemy->dstrect.h + arrayWave[spawnedIndex]->dist)
+	{
+		return true;
+	}
 
 	return false;
 }
@@ -965,24 +1004,64 @@ bool isPlayerMoving(PlayerShip* player)
 	return true;
 }
 
+bool shouldEnemyMove(EnemyShip* foe)
+{
+	bool x = false;
+	bool y = true;
+
+	if((foe->stopCriteria == x && foe->enemy->x_axis == foe->stopValue) || (foe->stopCriteria == y && foe->enemy->y_axis == foe->stopValue))
+	{
+		if(foe->timeRunning == false)
+		{
+			time(&(foe->timeStop));
+			foe->timeRunning = true;
+			return false;
+		}
+		else
+		{
+			time(&(foe->timeResume));
+			if((int) (foe->timeResume - foe->timeStop) >= 5)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}	
+	}
+	return true;
+}
+
 EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter)
 {
+	int aux1 = 0;
+	int aux3 = 0;
+	int aux4 = 0;
+	int stopAux = 0;
+	
 	for (int i = 0; i < waveRegister[waveCounter]; i++)
 	{
 		if(waveCounter == 0)
 		{
-			arrayWave[i] = createEnemyShip(1, -2, 301, horizontal, -1, direita, sequential);
+			if(stopAux == 0){stopAux = 195;} 
+			arrayWave[i] = createEnemyShip(1, -2, 301, horizontal, -1, direita, sequential, 0, stopAux);
+			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
+			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 1)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			if(stopAux == 0){stopAux = 195;}
+			arrayWave[i] = createEnemyShip(1, 1282, 301, horizontal, -1, esquerda, sequential, 0, 0);
+			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
+			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 2)
 		{
-			arrayWave[i] = createEnemyShip(2, 1280-90, 720, vertical, cima, direita, paralel);
+			arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, paralel, 0, 0);
 			if(i+1 < waveRegister[waveCounter])
 			{
-				arrayWave[i+1] = createEnemyShip(2, 0, 720, vertical, cima, -1, paralel);
+				arrayWave[i+1] = createEnemyShip(2, 0, 720, vertical, cima, -1, paralel, 0, 0);
 				i++;
 			}
 		}
@@ -990,81 +1069,198 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		{
 			if(i < 5)
 			{
-				arrayWave[i] = createEnemyShip(2, 1280-90, 720, vertical, cima, direita, paralel);
+				arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, paralel, 0, 0);
 				if(i+1 < waveRegister[waveCounter])
 				{
-					arrayWave[i+1] = createEnemyShip(2, 0, 720, vertical, cima, -1, paralel);
+					arrayWave[i+1] = createEnemyShip(2, 0, 720, vertical, cima, -1, paralel, 0, 0);
 					i++;
 				}
 			}
 			else
 			{
-				arrayWave[i] = createEnemyShip(1, -2, 301, horizontal, -1, direita, sequential);	
+				arrayWave[i] = createEnemyShip(1, -2, 301, horizontal, -1, direita, sequential, 0, 0);	
 			}
 		}
 		else if(waveCounter == 4)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(1, -2, 200, horizontal, -1, direita, paralel, 0, 0);
+			if(i+1 < waveRegister[waveCounter])
+			{
+				arrayWave[i+1] = createEnemyShip(1, 1280, 500, horizontal, -1, esquerda, paralel, 0, 0);
+				i++;
+			}
 		}
 		else if(waveCounter == 5)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
-		}
+			arrayWave[i] = createEnemyShip(1, -2, 200, diagonal, cima, direita, sequential, 50, 0);
+			if(i+1 < waveRegister[waveCounter])
+			{
+				arrayWave[i+1] = createEnemyShip(1, 1280, 200, diagonal, cima, esquerda, sequential, 0, 0);
+				i++;
+			}
+		}	
 		else if(waveCounter == 6)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(3, 1280+65, 50, diagonal, baixo, esquerda, sequential, 20, 0);
 		}
 		else if(waveCounter == 7)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(3, -65, 50, diagonal, baixo, direita, sequential, 20, 0);
 		}
 		else if(waveCounter == 8)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			if(i < 8)
+			{
+				arrayWave[i] = createEnemyShip(3, 1280+65, 50, diagonal, baixo, esquerda, paralel, 50, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(3, -65, 50, diagonal, baixo, direita, paralel, 50, 0);
+					i++;
+				}
+			}
+			else
+			{
+				arrayWave[i] = createEnemyShip(1, -2, 200, horizontal, -1, direita, paralel, 0, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(1, 1280, 500, horizontal, -1, esquerda, paralel, 0, 0);
+					i++;
+				}
+			}
 		}
 		else if(waveCounter == 9)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			if(i < 4)
+			{
+				arrayWave[i] = createEnemyShip(3, 1280+65, 50, diagonal, baixo, esquerda, paralel, 50, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(3, -65, 50, diagonal, baixo, direita, paralel, 50, 0);
+					i++;
+				}
+			}
+			else
+			{
+				arrayWave[i] = createEnemyShip(6, 1280-90, -5, vertical, baixo, -1, paralel, 0, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(2, 0, -5, vertical, baixo, -1, paralel, 0, 0);
+					i++;
+				}
+			}
 		}
 		else if(waveCounter == 10)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			if(i < 10)
+			{
+				arrayWave[i] = createEnemyShip(1, -2, 200, horizontal, -1, direita, paralel, 0, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(1, 1280, 290, horizontal, -1, esquerda, paralel, 0, 0);
+					i++;
+				}
+			}
+			else if (i < 16)
+			{
+				arrayWave[i] = createEnemyShip(3, 200+aux3, -5, vertical, baixo, -1, paralel, 0, 0);
+				aux3 += 150;
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(3, 200+aux3, -5, vertical, baixo, -1, paralel, 0, 0);
+					i++;
+					aux3 += 150;
+				}
+			}
+			else
+			{
+				arrayWave[i] = createEnemyShip(2, 1280-90, 720, vertical, cima, -1, paralel, 0, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(2, 0, 720, vertical, cima, -1, paralel, 0, 0);
+					i++;
+				}
+			}
 		}
 		else if(waveCounter == 11)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(4, 500, -50, vertical, baixo, -1, sequential, 0, 0);
 		}
 		else if(waveCounter == 12)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			if(i < 9)
+			{
+				arrayWave[i] = createEnemyShip(1, -2, 200, horizontal, -1, direita, paralel, 0, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(1, 1280, 290, horizontal, -1, esquerda, paralel, 0, 0);
+					i++;
+				}
+			}
+			else if (i < 15)
+			{
+				arrayWave[i] = createEnemyShip(3, 200+aux3, -5, vertical, baixo, -1, paralel, 0, 0);
+				aux3 += 100;
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(3, 200+aux3, -5, vertical, baixo, -1, paralel, 0, 0);
+					i++;
+					aux3 += 100;
+				}
+			}
+			else if (i < 18)
+			{
+				arrayWave[i] = createEnemyShip(2, 1280-90, 720, vertical, cima, -1, paralel, 0, 0);
+				if(i+1 < waveRegister[waveCounter])
+				{
+					arrayWave[i+1] = createEnemyShip(2, 0, 720, vertical, cima, -1, paralel, 0, 0);
+					i++;
+				}
+			}
+			else
+			{
+				arrayWave[i] = createEnemyShip(4, 500, -230, vertical, baixo, -1, sequential, 0, 0);
+			}
 		}
 		else if(waveCounter == 13)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential, 0, 0);
 		}
 		else if(waveCounter == 14)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(1, -2, 200, horizontal, -1, direita, paralel, 0, 0);
+			if(i+1 < waveRegister[waveCounter])
+			{
+				arrayWave[i+1] = createEnemyShip(1, 1280, 290, horizontal, -1, esquerda, paralel, 0, 0);
+				i++;
+			}
 		}
 		else if(waveCounter == 15)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(4, 250, -230, vertical, baixo, -1, paralel, 50, 0);
+			i++;
+			arrayWave[i] = createEnemyShip(4, 500, -230, vertical, baixo, -1, paralel, 50, 0);
 		}
 		else if(waveCounter == 16)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(3, -65, 200, horizontal, -1, direita, sequential, 0, 0);
 		}
 		else if(waveCounter == 17)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(3, 1280+65, 200, horizontal, -1, esquerda, sequential, 0, 0);
 		}
 		else if(waveCounter == 18)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(4, 400, -230, vertical, baixo, -1, paralel, 50, 0);
+			
+			if(i+1 < waveRegister[waveCounter])
+			{
+				arrayWave[i+1] = createEnemyShip(4, 650, -230, vertical, baixo, -1, paralel, 50, 0);
+				i++;
+			}
 		}
 		else if(waveCounter == 19)
 		{
-			arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, sequential);
+			arrayWave[i] = createEnemyShip(5, 400, -600, vertical, baixo, -1, sequential, 0, 0);
 		}
 	}
 	return arrayWave;

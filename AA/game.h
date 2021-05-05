@@ -5,6 +5,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <string.h>
+#include <time.h>
 #define horizontal 0
 #define vertical 1
 #define diagonal 2
@@ -47,7 +48,14 @@ typedef struct EnemyShip
 	int type;
 	bool spawned;
 	int spawnType;
+	int dist;
+	bool stopCriteria;
+	int stopValue;
+	time_t timeStop;
+	time_t timeResume;
+	bool timeRunning;
 	Ship* enemy;
+	
 } EnemyShip;
 
 typedef struct
@@ -84,7 +92,7 @@ void blit(SDL_Texture *, SDL_Renderer *, int, int, PlayerShip*);
 SDL_Texture *loadShipImage(char *, SDL_Renderer *);
 SDL_Point getSize(SDL_Texture *);
 
-EnemyShip* createEnemyShip(int, int, int, int, int, int, int);
+EnemyShip* createEnemyShip(int, int, int, int, int, int, int, int, int);
 PlayerShip *createPlayerShip(SDL_Renderer *);
 Bullet *createBullet(Ship *, BulletVector *, SDL_Renderer *);
 BulletVector *createBulletVector(void);
@@ -107,5 +115,6 @@ bool checkWaveStatus(EnemyShip**, int);
 bool spawnRequest(EnemyShip**, int);
 void changeShipColor(PlayerShip*);
 bool isPlayerMoving(PlayerShip*);
+bool shouldEnemyMove(EnemyShip*);
 EnemyShip** waveLoader(EnemyShip**, int*, int);
 PlayerShip* playerRule(PlayerShip* player);
