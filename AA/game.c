@@ -91,6 +91,7 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend)
 	bool flagEnter = true;
 
 	SDL_Texture *bg = loadShipImage("assets/menu/game_screen.png", rend);
+
 	SDL_Rect a_BG = {0, 1080, 1920, 1080};
 	SDL_Rect b_BG = {0, 0, 1280, 720};
 
@@ -135,14 +136,13 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend)
 				Mix_PlayChannel(-1, select, 0);
 
 				if(srcBG.y != 720){
-					//flagEnter = false;
-					scape = gameLoop(window, rend);
-					
+					//scape = gameLoop(window, rend, 1);
+					scape = selectionScreen(window, rend);
 				}
 
 				else
 				{
-					readScore(rend);
+					readScore(rend, window);
 				}
 
 				Mix_PlayMusic(bgm, -1);
@@ -151,11 +151,6 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend)
 			if(scape == 1)
 			{
 				isRunning = false;
-			}
-
-			else if(scape == 2)
-			{	
-				scape = gameLoop(window, rend);
 			}
 
 			SDL_RenderCopy(rend, bg, &srcBG, &dstBG);
@@ -171,7 +166,178 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend)
 	return 0;
 }
 
-int gameLoop(SDL_Window *window, SDL_Renderer *rend)
+int selectionScreen(SDL_Window *window, SDL_Renderer *rend)
+{
+
+	bool isRunning = true;
+	SDL_Rect srcBG = {0,0,1280,720};
+	SDL_Rect dstBG = {0,0,1280,720};
+	SDL_Event ev;
+	int scape = 0;
+	bool touch = false;
+	int retornoGameLoop;
+	int playerType = 0;
+
+	bool flagEnter = true;
+
+	SDL_Texture *bg = loadShipImage("assets/menu/selection_screen.png", rend);
+
+	Mix_Chunk* nav = Mix_LoadWAV("assets/sounds/sfx_navigation.wav");
+	Mix_Chunk* select = Mix_LoadWAV("assets/sounds/sfx_selection.wav");
+
+
+	//SDL_RenderClear(rend);
+	// SDL_RenderCopy(rend, bg, &srcBG, &dstBG);
+	// SDL_RenderPresent(rend);
+	// SDL_UpdateWindowSurface(window);
+
+  /*	while(isRunning)
+  	{
+  		while(SDL_PollEvent(&ev) != 0)
+  		{
+  			if(ev.type == SDL_QUIT || ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE)
+			{
+				isRunning = false;
+			}
+
+			if(ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_RIGHT && srcBG.y <= 1440)
+			{
+				srcBG.y += 720;
+
+				if(touch == false)
+				{
+					Mix_PlayChannel(-1, nav, 0);
+					touch = true;
+				}
+			}
+
+			else if(ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_LEFT && srcBG.y >= 0)
+			{
+				srcBG.y -= 720;
+
+				if(touch == false)
+				{
+					Mix_PlayChannel(-1, nav, 0);
+					touch = true;
+				}
+			}
+
+			else if(ev.type == SDL_KEYUP)
+			{
+				touch = false;
+			}
+
+			if(ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_RETURN)
+			{
+				Mix_PlayChannel(-1, select, 0);
+
+				if(srcBG.y == 0)
+				{
+					retornoGameLoop = gameLoop(window, rend, 1);
+					playerType = 1;
+					break;	
+				}
+
+				else if(srcBG.y == 720)
+				{
+					retornoGameLoop = gameLoop(window, rend, 2);
+					playerType = 2;
+					break;
+				}
+
+				else if(srcBG.y == 1440)
+				{
+					retornoGameLoop = gameLoop(window, rend, 3);
+					playerType = 3;
+					break;
+				}
+			}
+
+			SDL_RenderCopy(rend, bg, &srcBG, &dstBG);
+			SDL_RenderPresent(rend);
+			SDL_UpdateWindowSurface(window);
+		}
+
+  		if(retornoGameLoop == 2)
+		{	
+			retornoGameLoop = gameLoop(window, rend, playerType);
+		}
+  	}*/
+
+  	while(isRunning)
+	{
+		while (SDL_PollEvent(&ev) != 0)
+		{
+
+			//Fecha a janela se apertar Esc ou 'X'
+			if(ev.type == SDL_QUIT || ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE)
+			{
+				isRunning = false;
+			}
+
+			if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_LEFT)
+			{
+				if(/*touch == false &&*/ srcBG.y >= 0)
+				{
+					Mix_PlayChannel(-1, nav, 0);
+					srcBG.y -= 720;
+					touch = true;
+				}
+			}
+			else if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_RIGHT)
+			{
+				if(srcBG.y <= 1440)
+				{
+					Mix_PlayChannel(-1, nav, 0);
+					srcBG.y += 720;
+				}
+			}
+			/*else if(ev.type == SDL_KEYUP)
+			{
+				touch = false;
+			}*/
+
+			if(ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_RETURN)
+			{
+				Mix_PlayChannel(-1, select, 0);
+
+				if(srcBG.y == 0){
+					retornoGameLoop = gameLoop(window, rend, 1);
+					//scape = selectionScreen(window, rend);
+				}
+
+				else if(srcBG.y == 720){
+					retornoGameLoop = gameLoop(window, rend, 2);
+					//scape = selectionScreen(window, rend);
+				}
+
+				else if(srcBG.y == 1440){
+					retornoGameLoop = gameLoop(window, rend, 3);
+					//scape = selectionScreen(window, rend);
+				}
+
+				//Mix_PlayMusic(bgm, -1);
+			}
+
+			if(retornoGameLoop == 1)
+			{
+				isRunning = false;
+			}
+
+			SDL_RenderCopy(rend, bg, &srcBG, &dstBG);
+			SDL_RenderPresent(rend);
+			SDL_UpdateWindowSurface(window);
+		}
+	}
+
+	Mix_FreeChunk(nav);
+	Mix_FreeChunk(select);
+	Mix_HaltMusic();
+
+	return retornoGameLoop;
+}
+
+int gameLoop(SDL_Window *window, SDL_Renderer *rend, int playerType)
 {
 	const int FPS = 60;
 	int frameTime;
@@ -202,7 +368,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 
 	BulletVector *bulletVectorPlayer = createBulletVector();
 	BulletVector *bulletVectorEnemies = createBulletVector();
-	PlayerShip *player = createPlayerShip(rend);
+	PlayerShip *player = createPlayerShip(rend, playerType);
 
 	blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis, player);
 	//Carregando Sons
@@ -362,7 +528,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			{
 				if(spawnRequest(NULL, -1, bulletVectorPlayer, player->ally))
 				{
-					Bullet *bullet = createBullet(player->ally, bulletVectorPlayer, -1, 0);
+					Bullet *bullet = createBullet(player->ally, bulletVectorPlayer, -1, 0, playerType);
 				}
 				{
 					Mix_PlayChannel(2, bulletSound, 0);
@@ -424,10 +590,76 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 				changeShipColor(player);
 			}
 
-			if(player->ally->hp == 0)
+			if(player->ally->hp <= 0)
 			{
 				break;
 			} 
+
+			if(waveCounter == 19 && arrayWave[0]->enemy->hp <= 0)
+			{
+
+				FILE* hsFile = fopen("high_scores.bin", "ab+");
+				int offset = getOffset(hsFile);
+				
+				if(offset == 10)
+				{
+					int lowestHighScore = findLowestHighScore();
+
+					if(player->points > lowestHighScore)
+					{
+
+						SDL_DestroyTexture(bg);
+						SDL_DestroyTexture(bossSheet);
+						SDL_DestroyTexture(bullet_1);
+						SDL_DestroyTexture(pause_overlay);
+						SDL_DestroyTexture(player->ally->texture);
+						SDL_DestroyTexture(enemyShipsSheet);
+						SDL_DestroyTexture(explosions);
+						SDL_DestroyTexture(textureWithScoring);
+
+						for (int i = 0; i < waveRegister[0]; i++)
+						{
+							free(arrayWave[i]->enemy);
+							free(arrayWave[i]);
+						}
+						free(arrayWave);
+						free(player->ally);
+						free(player);
+						Mix_FreeMusic(bgm);
+						Mix_FreeChunk(jetTurbine);
+						Mix_FreeChunk(bulletSound);
+
+						victoryHighScore(window, rend, player->points);
+						isRunning = false;
+					}
+				}
+
+				else
+				{
+					SDL_DestroyTexture(bg);
+					SDL_DestroyTexture(bossSheet);
+					SDL_DestroyTexture(bullet_1);
+					SDL_DestroyTexture(pause_overlay);
+					SDL_DestroyTexture(player->ally->texture);
+					SDL_DestroyTexture(enemyShipsSheet);
+					SDL_DestroyTexture(explosions);
+					SDL_DestroyTexture(textureWithScoring);
+
+					for (int i = 0; i < waveRegister[0]; i++)
+					{
+						free(arrayWave[i]->enemy);
+						free(arrayWave[i]);
+					}
+					free(arrayWave);
+					free(player->ally);
+					free(player);
+					Mix_FreeMusic(bgm);
+					Mix_FreeChunk(jetTurbine);
+					Mix_FreeChunk(bulletSound);
+					victoryHighScore(window, rend, player->points);
+					isRunning = false;
+				}
+			}
 
 			//Comeca a proxima wave. Obs.:spawnedIndex +1 == Total de Naves inimigas spawnadas
 			if (spawnedIndex + 1 == waveRegister[waveCounter] && checkWaveStatus(arrayWave, spawnedIndex + 1) && waveCounter != 19)
@@ -448,7 +680,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 			}	
 		}
 
-		
+
 		textureWithScoring = showScoreOnScreen(rend, bg, player->points);
 		SDL_RenderPresent(rend);
 		SDL_UpdateWindowSurface(window);
@@ -460,9 +692,68 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 
 	if(player->ally->hp <= 0)
 	{
+		FILE* hsFile = fopen("high_scores.bin", "ab+");
+		int offset = getOffset(hsFile);
+
+		//printf("entrei aqui\n");
+		if(offset == 10)
+		{
+			int lowestHighScore = findLowestHighScore();
+
+			if(player->points > lowestHighScore)
+			{
+				SDL_DestroyTexture(bg);
+				SDL_DestroyTexture(bossSheet);
+				SDL_DestroyTexture(bullet_1);
+				SDL_DestroyTexture(pause_overlay);
+				SDL_DestroyTexture(player->ally->texture);
+				SDL_DestroyTexture(enemyShipsSheet);
+				SDL_DestroyTexture(explosions);
+				SDL_DestroyTexture(textureWithScoring);
+
+				for (int i = 0; i < waveRegister[0]; i++)
+				{
+					free(arrayWave[i]->enemy);
+					free(arrayWave[i]);
+				}
+				free(arrayWave);
+				free(player->ally);
+				free(player);
+				Mix_FreeMusic(bgm);
+				Mix_FreeChunk(jetTurbine);
+				Mix_FreeChunk(bulletSound);
+
+				gameOverHighScore(window, rend, player->points);
+			}
+		}
+
+		else
+		{
+			SDL_DestroyTexture(bg);
+			SDL_DestroyTexture(bossSheet);
+			SDL_DestroyTexture(bullet_1);
+			SDL_DestroyTexture(pause_overlay);
+			SDL_DestroyTexture(player->ally->texture);
+			SDL_DestroyTexture(enemyShipsSheet);
+			SDL_DestroyTexture(explosions);
+			SDL_DestroyTexture(textureWithScoring);
+
+			for (int i = 0; i < waveRegister[0]; i++)
+			{
+				free(arrayWave[i]->enemy);
+				free(arrayWave[i]);
+			}
+			free(arrayWave);
+			free(player->ally);
+			free(player);
+			Mix_FreeMusic(bgm);
+			Mix_FreeChunk(jetTurbine);
+			Mix_FreeChunk(bulletSound);
+			gameOverHighScore(window, rend, player->points);
+		}
+
 		retryOrExit = gameOver(window, rend);
 	}
-
 
 	//Descarregando Memória
 	Mix_HaltMusic();
@@ -501,6 +792,70 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend)
 	}
 
 	return 0;
+}
+
+void gameOverHighScore(SDL_Window *window, SDL_Renderer *rend, int scorePlayer)
+{
+	bool isRunning = true;
+	SDL_Rect srcBG = {0,0,1280,720};
+	SDL_Rect dstBG = {0,0,1280,720};
+	SDL_Event ev;
+	bool touch = false;
+
+	SDL_Texture *bg = loadShipImage("assets/menu/gameOverRecordScreen.png", rend);
+	SDL_Rect a_BG = {0, 1080, 1920, 1080};
+	SDL_Rect b_BG = {0, 0, 1280, 720};
+
+	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024);
+	Mix_Music* bgm = Mix_LoadMUS("assets/sounds/bgm_title.mp3");
+	Mix_Chunk* nav = Mix_LoadWAV("assets/sounds/sfx_navigation.wav");
+	Mix_Chunk* select = Mix_LoadWAV("assets/sounds/sfx_selection.wav");
+  	Mix_PlayMusic(bgm, -1);
+
+	SDL_RenderCopy(rend, bg, NULL, &srcBG);
+	SDL_RenderPresent(rend);
+	SDL_UpdateWindowSurface(window);
+
+  	writeThingsOnScreen(rend, bg, scorePlayer);
+
+  	SDL_DestroyTexture(bg);
+
+  	Mix_FreeChunk(nav);
+	Mix_FreeChunk(select);
+	Mix_FreeMusic(bgm);
+	Mix_HaltMusic();
+}
+
+void victoryHighScore(SDL_Window *window, SDL_Renderer *rend, int scorePlayer)
+{
+	bool isRunning = true;
+	SDL_Rect srcBG = {0,0,1280,720};
+	SDL_Rect dstBG = {0,0,1280,720};
+	SDL_Event ev;
+	bool touch = false;
+
+	SDL_Texture *bg = loadShipImage("assets/menu/victory_screen.png", rend);
+	SDL_Rect a_BG = {0, 1080, 1920, 1080};
+	SDL_Rect b_BG = {0, 0, 1280, 720};
+
+	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024);
+	Mix_Music* bgm = Mix_LoadMUS("assets/sounds/bgm_title.mp3");
+	Mix_Chunk* nav = Mix_LoadWAV("assets/sounds/sfx_navigation.wav");
+	Mix_Chunk* select = Mix_LoadWAV("assets/sounds/sfx_selection.wav");
+  	Mix_PlayMusic(bgm, -1);
+
+	SDL_RenderCopy(rend, bg, NULL, &srcBG);
+	SDL_RenderPresent(rend);
+	SDL_UpdateWindowSurface(window);
+
+  	writeThingsOnScreen(rend, bg, scorePlayer);
+
+  	SDL_DestroyTexture(bg);
+
+  	Mix_FreeChunk(nav);
+	Mix_FreeChunk(select);
+	Mix_FreeMusic(bgm);
+	Mix_HaltMusic();
 }
 
 int gameOver(SDL_Window *window, SDL_Renderer *rend)
@@ -855,35 +1210,55 @@ void blit(SDL_Texture *texture, SDL_Renderer *renderer, int x, int y, PlayerShip
 }
 
 //funcionamento player
-PlayerShip *createPlayerShip(SDL_Renderer *renderer)
+PlayerShip *createPlayerShip(SDL_Renderer *renderer, int playerType)
 {
-	
-	PlayerShip *player = (PlayerShip *)malloc(sizeof(PlayerShip));
 
-	player->points = 0;
-	player->invincible = false;
+	PlayerShip *player = (PlayerShip *)malloc(sizeof(PlayerShip));
 	player->ally = (Ship *)malloc(sizeof(Ship));
-	player->ally->hp = 100;
+
+	if(playerType == 1)
+	{
+		printf("criei a highwind!\n");
+		player->ally->hp = 100;
+		player->ally->speed = 9;
+		player->ally->texture = loadShipImage("assets/objects/player_sheet_highwind.png", renderer);
+	}
+
+	else if(playerType == 2)
+	{
+		printf("criei a solidsnake!\n");
+		player->ally->hp = 100;
+		player->ally->speed = 6;
+		player->ally->texture = loadShipImage("assets/objects/player_sheet_solidsnake.png", renderer);
+	}
+
+	else if(playerType == 3)
+	{
+		printf("criei a braveheart!\n");
+		player->ally->hp = 300;
+		player->ally->speed = 6;
+		player->ally->texture = loadShipImage("assets/objects/player_sheet_braveheart.png", renderer);
+	}
+	
+	//hp, dano do tiro e velocidade
+
+	player->ally->isPlayer = true;
+	player->points = 0;
 	player->ally->x_axis = 590;
 	player->ally->y_axis = 600;
-	player->ally->speed = 6;
-	player->ally->isPlayer = true;
+	player->invincible = false;
+	
 	player->up = 0;
 	player->down = 0;
 	player->left = 0;
 	player->right = 0;
-	player->ally->texture = loadShipImage("assets/objects/player_sheet.png", renderer);
 	SDL_Rect a = {0,0, 230, 280};
 	SDL_Rect b = {player->ally->x_axis, player->ally->y_axis, 100, 135};
 	player->ally->srcrect = a;
 	player->ally->dstrect = b;
-	player->up = 0;
-	player->down = 0;
-	player->left = 0;
-	player->right = 0;
 	player->doInvencibilityAnimation = false;
 	player->frameTime = 0;
-
+	
 	return player;
 }
 
@@ -1135,7 +1510,7 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, BulletVector*
 			{
 				if(arrayWave[k]->type == 1 || arrayWave[k]->type == 2 || arrayWave[k]->type == 6 || arrayWave[k]->type == 3 || arrayWave[k]->type == 7)
 				{
-					Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, arrayWave[k]->type, 0);
+					Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, arrayWave[k]->type, 0, -1);
 				}
 				else if(arrayWave[k]->type == 5)
 				{
@@ -1145,12 +1520,12 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, BulletVector*
 						contador2++;
 						if(contador2 >= 100)
 						{
-							Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, 9, contador);
+							Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, 9, contador, -1);
 						}
 						else
 						{
 							contador += 60;
-							Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, arrayWave[k]->type, contador);
+							Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, arrayWave[k]->type, contador, -1);
 						}
 					}
 					
@@ -1164,14 +1539,13 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, BulletVector*
 }
 
 //funcionamento das balas
-Bullet *createBullet(Ship *source, BulletVector *bulletVector, int bulletType, int dist)
+Bullet *createBullet(Ship *source, BulletVector *bulletVector, int bulletType, int dist, int playerType)
 {
 	Bullet *bullet = (Bullet *)malloc(sizeof(Bullet));
 
 	if(source->isPlayer == true)
 	{
 		bullet->speed = 5;
-		bullet->damage = 100;
 		bullet->x_axis = source->x_axis + 27;
 		bullet->y_axis = source->y_axis - 45;
 		bullet->owner = source;
@@ -1180,7 +1554,18 @@ Bullet *createBullet(Ship *source, BulletVector *bulletVector, int bulletType, i
 		bullet->srcrect = a;
 		bullet->dstrect = b;
 		bullet->fireRate = 80;
+
+		if(playerType == 2)
+		{
+			bullet->damage = 100;
+		}	
+
+		else
+		{
+			bullet->damage = 70;
+		}
 	}
+
 	else if(bulletType == 5)
 	{
 		bullet->speed = 9;
@@ -1616,36 +2001,54 @@ bool shouldEnemyMove(EnemyShip* foe)
 
 EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter)
 {
-	int aux1 = 195;
+	int aux1 = 160;
 	int aux2 = 300;
 	int aux3 = 0;
 	int aux4 = 0;
 	int stopAux = 0;
+
+	//aux são tipos de stopAux, pois cada nave tem um stopAux especifico,
+	//caso tenha um vetor com multiplos tipos de nave
+
+	//stopAux sao os passos que uma nave pode andar (exceto aux3)
+
+	//createEnemyShip, parametro 1: tipo da nave, 
+	//				   parametro 2: x da nave, 
+	//				   parametro 3: y da nave, 
+	// 				   parametro 4: tipo do movimento (vertical ou horizontal), 
+	//				   parametro 5: tipo 2 de movimento(diagonal ou nao), 
+	//				   parametro 6: tipo 3 de movimento (esquerda ou direita), 
+	// 				   parametro 7: sequencial ou paralelo (nao mexer), 
+	//				   parametro 8: distancia entre uma nave e outra, 
+	//				   parametro 9: valor de parada (stopAux ou n).
 	
 	for (int i = 0; i < waveRegister[waveCounter]; i++)
 	{
 		if(waveCounter == 0)
 		{
-			if(stopAux == 0){stopAux = 195;} 
-			arrayWave[i] = createEnemyShip(1, -2, 301, horizontal, -1, direita, sequential, 0, stopAux);
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 192;} 
+			arrayWave[i] = createEnemyShip(1, -2, 200, horizontal, -1, direita, sequential, 0, stopAux);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 1)
 		{
-			if(stopAux == 0){stopAux = 195;}
-			arrayWave[i] = createEnemyShip(1, 1282, 301, horizontal, -1, esquerda, sequential, 0, 0);
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 192;}
+			arrayWave[i] = createEnemyShip(1, 1282, 200, horizontal, -1, esquerda, sequential, 0, 0);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 2)
 		{
+			printf("wave %d\n", waveCounter);
 			if(stopAux == 0){stopAux = 350;}
 			if(i == 0)
 			{
 				arrayWave[i] = createEnemyShip(2, 0, 720, vertical, cima, -1, sequential, 0, stopAux);	
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->y_axis - arrayWave[i]->enemy->speed*stopAux;
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, sequential, 0, stopAux);
@@ -1656,7 +2059,8 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 			{
 				arrayWave[i] = createEnemyShip(2, 0, 720, vertical, cima, -1, sequential, 0, stopAux);	
 				arrayWave[i]->stopValue = arrayWave[i-1]->stopValue + arrayWave[i]->enemy->dstrect.h;
-				if(i+1 < waveRegister[waveCounter])
+				
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, sequential, 0, stopAux);
@@ -1666,6 +2070,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 3)
 		{
+			printf("wave %d\n", waveCounter);
 			if(i < 6)
 			{
 				if(stopAux == 0){stopAux = 200;}
@@ -1689,20 +2094,22 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 4)
 		{
-			if(stopAux == 0){stopAux = 215;}
-			arrayWave[i] = createEnemyShip(1, 1282, 301, horizontal, -1, esquerda, paralel, 0, stopAux);
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 216;}
+			arrayWave[i] = createEnemyShip(1, 1282, 201, horizontal, -1, esquerda, paralel, 0, stopAux);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
 
 			if(i+1 < waveRegister[waveCounter])
 			{
 				i++;
-				arrayWave[i] = createEnemyShip(1, -2, 601, horizontal, -1, direita, paralel, 0, 0);
+				arrayWave[i] = createEnemyShip(1, -2, 401, horizontal, -1, direita, paralel, 0, 0);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
 			}
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 5)
 		{
+			printf("wave %d\n", waveCounter);
 			arrayWave[i] = createEnemyShip(1, -2, 300, diagonal, cima, direita, sequential, 50, 0);
 			if(i+1 < waveRegister[waveCounter])
 			{
@@ -1712,6 +2119,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}	
 		else if(waveCounter == 6)
 		{
+			printf("wave %d\n", waveCounter);
 			if(stopAux == 0){stopAux = 195;}
 			arrayWave[i] = createEnemyShip(3, 1280, 50, diagonal, baixo, esquerda, sequential, 0, 0);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
@@ -1719,6 +2127,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 7)
 		{
+			printf("wave %d\n", waveCounter);
 			if(stopAux == 0){stopAux = 195;}
 			arrayWave[i] = createEnemyShip(3, -65, 50, diagonal, baixo, direita, sequential, -65, 0);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
@@ -1726,12 +2135,13 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 8)
 		{
+			printf("wave %d\n", waveCounter);
 			if(i < 8)
 			{
 				if(stopAux == 0){stopAux = 195;}
 				arrayWave[i] = createEnemyShip(3, 1280, 50, diagonal, baixo, esquerda, paralel, 0, 0);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(3, -65, 50, diagonal, baixo, direita, paralel, -65, 0);
@@ -1742,13 +2152,13 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 			}
 			else
 			{
-				arrayWave[i] = createEnemyShip(1, 1280, 301, horizontal, -1, esquerda, paralel, 0, aux1);
+				arrayWave[i] = createEnemyShip(1, 1280, 70, horizontal, -1, esquerda, paralel, 0, aux1);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*aux1;
 
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
-					arrayWave[i] = createEnemyShip(1, -2, 601, horizontal, -1, direita, paralel, 0, 0);
+					arrayWave[i] = createEnemyShip(1, -2, 500, horizontal, -1, direita, paralel, 0, 0);
 					arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*aux1;
 				}
 				aux1 -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
@@ -1756,12 +2166,13 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 9)
 		{
+			printf("wave %d\n", waveCounter);
 			if(i < 4)
 			{
 				if(stopAux == 0){stopAux = 195;}
 				arrayWave[i] = createEnemyShip(3, 1280, 50, diagonal, baixo, esquerda, paralel, 0, 0);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(3, -65, 50, diagonal, baixo, direita, paralel, -65, 0);
@@ -1772,24 +2183,28 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 			else
 			{
 				arrayWave[i] = createEnemyShip(2, 0, 720, vertical, cima, -1, sequential, 0, aux2);	
-				arrayWave[i]->stopValue = arrayWave[i]->enemy->y_axis - arrayWave[i]->enemy->speed*aux2;
-				if(i+1 < waveRegister[waveCounter])
+				arrayWave[i]->stopValue = arrayWave[i]->enemy->y_axis - (arrayWave[i]->enemy->speed * aux2);
+				
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, sequential, 0, aux2);
-					arrayWave[i]->stopValue = arrayWave[i-1]->stopValue + arrayWave[i]->enemy->dstrect.h;
+					arrayWave[i]->stopValue = arrayWave[i-1]->stopValue + (arrayWave[i]->enemy->dstrect.h);
 				}
+
+				aux2-=70;
 			}
 		}
 		else if(waveCounter == 10)
 		{
+			printf("wave %d\n", waveCounter);
 			if(i < 10)
 			{
 				if(stopAux == 0){stopAux = 215;}
 				arrayWave[i] = createEnemyShip(1, 1282, 301, horizontal, -1, esquerda, paralel, 0, stopAux);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
 
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(1, -2, 601, horizontal, -1, direita, paralel, 0, 0);
@@ -1803,7 +2218,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 				arrayWave[i] = createEnemyShip(7, 200+aux3, -64, vertical, baixo, -1, paralel, 0, 0);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->y_axis + arrayWave[i]->enemy->speed*aux4;
 				printf("%d\n", arrayWave[i]->stopValue);
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(7, 300+aux3, -64, vertical, baixo, -1, paralel, 0, 0);
@@ -1817,7 +2232,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 
 				arrayWave[i] = createEnemyShip(2, 0, 720, vertical, cima, -1, sequential, 0, aux2);	
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->y_axis - arrayWave[i]->enemy->speed*aux2;
-				if(i+1 < waveRegister[waveCounter])
+				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
 					arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, sequential, 0, aux2);
@@ -1829,10 +2244,12 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 11)
 		{
+			printf("wave %d\n", waveCounter);
 			arrayWave[i] = createEnemyShip(4, 500, -50, vertical, baixo, -1, sequential, 0, 0);
 		}
 		else if(waveCounter == 12)
 		{
+			printf("wave %d\n", waveCounter);
 			if(i < 9)
 			{
 				if(stopAux == 0){stopAux = 215;}
@@ -1842,7 +2259,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 				if(i+1 < waveRegister[waveCounter])
 				{
 					i++;
-					arrayWave[i] = createEnemyShip(1, -2, 601, horizontal, -1, direita, paralel, 0, 0);
+					arrayWave[i] = createEnemyShip(1, -2, 501, horizontal, -1, direita, paralel, 0, 0);
 					arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
 				}
 				stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
@@ -1874,6 +2291,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 				}
 				aux2 -= 70;
 			}
+
 			else
 			{
 				arrayWave[i] = createEnemyShip(4, 500, -230, vertical, baixo, -1, sequential, 0, 0);
@@ -1881,34 +2299,38 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 13)
 		{
-			if(stopAux == 0){stopAux = 195;}
-			arrayWave[i] = createEnemyShip(1, 1282, 301, horizontal, -1, esquerda, sequential, 0, 0);
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 260;}
+			arrayWave[i] = createEnemyShip(1, 1282, 250, horizontal, -1, esquerda, sequential, 0, 0);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 14)
 		{
-			if(stopAux == 0){stopAux = 215;}
-			arrayWave[i] = createEnemyShip(1, 1282, 301, horizontal, -1, esquerda, paralel, 0, stopAux);
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 224;}
+			arrayWave[i] = createEnemyShip(1, 1282, 220, horizontal, -1, esquerda, paralel, 0, stopAux);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
 
 			if(i+1 < waveRegister[waveCounter])
 			{
 				i++;
-				arrayWave[i] = createEnemyShip(1, -2, 601, horizontal, -1, direita, paralel, 0, 0);
+				arrayWave[i] = createEnemyShip(1, -2, 400, horizontal, -1, direita, paralel, 0, 0);
 				arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
 			}
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
 		}
 		else if(waveCounter == 15)
 		{
-			arrayWave[i] = createEnemyShip(4, 250, -230, vertical, baixo, -1, paralel, 50, 0);
+			printf("wave %d\n", waveCounter);
+			arrayWave[i] = createEnemyShip(4, 400, -230, vertical, baixo, -1, paralel, 50, 0);
 			i++;
-			arrayWave[i] = createEnemyShip(4, 500, -230, vertical, baixo, -1, paralel, 50, 0);
+			arrayWave[i] = createEnemyShip(4, 650, -230, vertical, baixo, -1, paralel, 50, 0);
 		}
 		else if(waveCounter == 16)
 		{
-			if(stopAux == 0){stopAux = 195;} 
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 450;} 
 			arrayWave[i] = createEnemyShip(3, -65, 200, horizontal, -1, direita, sequential, 0, 0);;
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis + arrayWave[i]->enemy->speed*stopAux;
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
@@ -1916,7 +2338,8 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 17)
 		{
-			if(stopAux == 0){stopAux = 195;}
+			printf("wave %d\n", waveCounter);
+			if(stopAux == 0){stopAux = 520;}
 			arrayWave[i] = createEnemyShip(3, 1280+65, 200, horizontal, -1, esquerda, sequential, 0, 0);
 			arrayWave[i]->stopValue = arrayWave[i]->enemy->x_axis - arrayWave[i]->enemy->speed*stopAux;
 			stopAux -= (int)((arrayWave[i]->enemy->dstrect.w/arrayWave[i]->enemy->speed) + 2);
@@ -1924,6 +2347,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 18)
 		{
+			printf("wave %d\n", waveCounter);
 			arrayWave[i] = createEnemyShip(4, 400, -230, vertical, baixo, -1, paralel, 50, 0);
 			
 			if(i+1 < waveRegister[waveCounter])
@@ -1934,6 +2358,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		}
 		else if(waveCounter == 19)
 		{
+			printf("wave %d\n", waveCounter);
 			arrayWave[i] = createEnemyShip(5, 400, -600, vertical, baixo, -1, sequential, 0, 0);
 			arrayWave[i]->stopValue = -200;
 		}
@@ -1981,7 +2406,7 @@ void writeScore(char* nomePlayer, int scorePlayer)
 	    	int offset = getOffset(hsFile);
 	    	rewind(hsFile);
 	    	fclose(hsFile);
-	    	organizeHighScore( scorePlayer, nomePlayer);
+	    	organizeHighScore(scorePlayer, nomePlayer);
 	    }
 	}
 }
@@ -2046,24 +2471,35 @@ void organizeHighScore(int scorePlayer, char* nomePlayer)
 
 	offset++;
 
-	if(offset <= 10){
-		
-		hsFile = fopen("high_scores.bin", "wb");
+	hsFile = fopen("high_scores.bin", "wb");
 
+	if(offset > 10)
+	{
+		for(i = 0; i < offset - 1; i++)
+		{
+			fwrite(&intOrganizados[i], sizeof(int), 1, hsFile);
+			fwrite(stringOrganizadas[i], sizeof(buffer), 1, hsFile);
+			printf("colocando o jogador %s de pontuacao %d\n", stringOrganizadas[i], intOrganizados[i]);
+		}
+	}
+
+	else
+	{
 		for(i = 0; i < offset; i++)
 		{
 			fwrite(&intOrganizados[i], sizeof(int), 1, hsFile);
 			fwrite(stringOrganizadas[i], sizeof(buffer), 1, hsFile);
+			printf("colocando o jogador %s de pontuacao %d\n", stringOrganizadas[i], intOrganizados[i]);
 		}
-
-		fclose(hsFile);
 	}
+
+	fclose(hsFile);
 	
 }
 
-void readScore(SDL_Renderer* renderer)
+void readScore(SDL_Renderer* renderer, SDL_Window* window)
 {
-	FILE *hsFile = fopen("high_scores.bin", "rb");
+	FILE *hsFile = fopen("high_scores.bin", "ab+");
 	int aux = 0;
 	char buffer[7];
 	char buffer1[100];
@@ -2071,18 +2507,26 @@ void readScore(SDL_Renderer* renderer)
 
 	char strScore[100];
 
+	SDL_Texture *bgHighScores = loadShipImage("assets/menu/score_screen.png", renderer);
+	SDL_Rect dstBG = {0,0,1280,720};
+
 	SDL_Rect highScoreRect;
-	highScoreRect.x = highScoreRect.y = 0;
+	highScoreRect.x = 350;
+	highScoreRect.y = 70;
 
 	TTF_Font* font = TTF_OpenFont("assets/fonts/Oswald-Light.ttf", 50);
 	SDL_Color color = {255,255,255,255};
 	
+	SDL_Surface* highScoreSurface;
+	SDL_Texture* highScoreTexture;
+
 	SDL_Event event;
 	bool quit = false;
-
 	int offset = getOffset(hsFile);
 	char strPrintHighScores[offset][1000];
 	rewind(hsFile);
+
+	SDL_RenderCopy(renderer, bgHighScores, NULL, &dstBG);
 
 	for(int i = 0; i < offset; i++)
 	{
@@ -2091,10 +2535,10 @@ void readScore(SDL_Renderer* renderer)
 		printf("posicao %d, nome %s e pontuacao %d\n", i + 1, buffer, aux);
 		itoa(aux, strScore, 10);
 		strcat(buffer1, strScore);
-		strcat(buffer1, ", ");
+		strcat(buffer1, " --------------------------- ");
 		strcat(buffer1, buffer);
-		SDL_Surface* highScoreSurface = TTF_RenderText_Solid(font, buffer1, color);
-		SDL_Texture* highScoreTexture = SDL_CreateTextureFromSurface(renderer, highScoreSurface);
+		highScoreSurface = TTF_RenderText_Solid(font, buffer1, color);
+		highScoreTexture = SDL_CreateTextureFromSurface(renderer, highScoreSurface);
 		SDL_QueryTexture(highScoreTexture, NULL, NULL, &highScoreRect.w, &highScoreRect.h);
 		SDL_RenderCopy(renderer, highScoreTexture, NULL, &highScoreRect);
 		SDL_RenderPresent(renderer);
@@ -2125,7 +2569,14 @@ void readScore(SDL_Renderer* renderer)
 					break;
 			}
 		}
+
+		//SDL_RenderCopy(renderer, bgHighScores, NULL, &dstBG);
+		//SDL_RenderCopy(renderer, highScoreTexture, NULL, &highScoreRect);
+		SDL_RenderPresent(renderer);
+		SDL_UpdateWindowSurface(window);
 	}
+
+
 	
 	fclose(hsFile);
 }
@@ -2140,6 +2591,7 @@ int getOffset(FILE* arq)
 
     while(!feof(arq))
     {
+    	//printf("entrei o while do getoffset\n");
 		readData(arq, contador, &aux, buffer, sizeof(buffer));
 		contador++;
         offset++;
@@ -2151,16 +2603,36 @@ int getOffset(FILE* arq)
 
 void readData(FILE* arq, int offset, int* scorePlayer, char* nomePlayer, int tamanhoNome)
 {
+
+
 	rewind(arq);
 	fseek(arq, offset * (sizeof(int) + tamanhoNome), SEEK_SET);
 	fread(scorePlayer, sizeof(int), 1, arq);
 	fread(nomePlayer, sizeof(char), sizeof(nomePlayer), arq);
 }
 
+int findLowestHighScore(void)
+{
+
+	FILE* arq = fopen("high_scores.bin", "rb");
+
+	int offset = getOffset(arq);
+	int lowestHighScore = 0;
+	char nomePlayer[7];
+
+	fseek(arq, (offset - 1) * (sizeof(int) + sizeof(nomePlayer)), SEEK_SET);
+	fread(&lowestHighScore, sizeof(int), 1, arq);
+	fread(nomePlayer, sizeof(char), sizeof(nomePlayer), arq);
+
+	fclose(arq);
+
+	return lowestHighScore;	
+}
+
 bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 {
 	TTF_Font* font = TTF_OpenFont("assets/fonts/Oswald-Light.ttf", 72);
-	SDL_Color color = {144,77,255,255};
+	SDL_Color color = {255,255,255,255};
 	SDL_Surface* textForSurface;
 	SDL_Surface* scoreForSurface; 
 	SDL_Texture* textWithFont;
@@ -2171,7 +2643,13 @@ bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 	bgRect.x = 0;
 	bgRect.y = 720;
 	SDL_Event event;
-	
+
+	textRect.x = 500;
+	textRect.y = 380;
+
+	scoreRect.x = 300;
+	scoreRect.y = 380;
+
 	int quit = false;
 	char strScore[1000];
 	bool pressed = false;
@@ -2184,6 +2662,14 @@ bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 
 	char* resultado = (char*) malloc(sizeof(char)* 100); 
 	char string1[100] = "";
+
+	scoreForSurface = TTF_RenderText_Solid(font, strScore, color);
+	textWithScore = SDL_CreateTextureFromSurface(renderer, scoreForSurface);
+	SDL_QueryTexture(textWithScore, NULL, NULL, &scoreRect.w, &scoreRect.h);
+	SDL_RenderCopy(renderer, bg, NULL, NULL);
+	SDL_RenderCopy(renderer, textWithScore, NULL, &scoreRect);
+	SDL_FreeSurface(scoreForSurface);
+	SDL_RenderPresent(renderer);
 	
 	SDL_StartTextInput();
 	
@@ -2218,9 +2704,8 @@ bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 					pressed = true;
 					printf("string sendo passada para o arquivo: %s\n", string1);
 					writeScore(string1, intScore);
-					//readScore(renderer);
-					//quit = true;
-					//return 1;
+					return 1;
+
 				}
 
 				else if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKSPACE && pressed == false && strlen(string1) >= 0)
@@ -2232,11 +2717,7 @@ bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 					scoreForSurface = TTF_RenderText_Solid(font, strScore, color);
 					textWithFont = SDL_CreateTextureFromSurface(renderer, textForSurface);
 					textWithScore = SDL_CreateTextureFromSurface(renderer, scoreForSurface);
-					scoreRect.x = 250;
-					scoreRect.y = 0;
 					SDL_QueryTexture(textWithScore, NULL, NULL, &scoreRect.w, &scoreRect.h);
-					textRect.x = 500;
-					textRect.y = 0;
 					SDL_QueryTexture(textWithFont, NULL, NULL, &textRect.w, &textRect.h);
 					SDL_RenderCopy(renderer, bg, NULL, NULL);
 					SDL_RenderCopy(renderer, textWithFont, NULL, &textRect);
@@ -2276,11 +2757,7 @@ bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 				scoreForSurface = TTF_RenderText_Solid(font, strScore, color);
 				textWithFont = SDL_CreateTextureFromSurface(renderer, textForSurface);
 				textWithScore = SDL_CreateTextureFromSurface(renderer, scoreForSurface);
-				scoreRect.x = 250;
-				scoreRect.y = 0;
 				SDL_QueryTexture(textWithScore, NULL, NULL, &scoreRect.w, &scoreRect.h);
-				textRect.x = 500;
-				textRect.y = 0;
 				SDL_QueryTexture(textWithFont, NULL, NULL, &textRect.w, &textRect.h);
 				SDL_RenderCopy(renderer, bg, NULL, &bgRect);
 				SDL_RenderCopy(renderer, textWithFont, NULL, &textRect);
@@ -2296,11 +2773,7 @@ bool writeThingsOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int intScore)
 				scoreForSurface = TTF_RenderText_Solid(font, strScore, color);
 				textWithFont = SDL_CreateTextureFromSurface(renderer, textForSurface);
 				textWithScore = SDL_CreateTextureFromSurface(renderer, scoreForSurface);
-				scoreRect.x = 250;
-				scoreRect.y = 0;
 				SDL_QueryTexture(textWithScore, NULL, NULL, &scoreRect.w, &scoreRect.h);
-				textRect.x = 500;
-				textRect.y = 0;
 				SDL_QueryTexture(textWithFont, NULL, NULL, &textRect.w, &textRect.h);
 				SDL_RenderCopy(renderer, bg, NULL, &bgRect);
 				SDL_RenderCopy(renderer, textWithFont, NULL, &textRect);
@@ -2319,12 +2792,15 @@ SDL_Texture* showScoreOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int scor
 {
 	
 	char pontuacao[6];
-
+	char score[100] = "score: ";
+	
 	itoa(scorePlayer, pontuacao, 10);
+
+	strcat(score, pontuacao);
 
 	TTF_Font* font = TTF_OpenFont("assets/fonts/Oswald-Light.ttf", 72);
 	SDL_Color color = {255,255,255,255};
-	SDL_Surface* surfaceWithScoring = TTF_RenderText_Solid(font, pontuacao, color);
+	SDL_Surface* surfaceWithScoring = TTF_RenderText_Solid(font, score, color);
 	SDL_Texture* textureWithScoring = SDL_CreateTextureFromSurface(renderer, surfaceWithScoring);
 	SDL_Rect scoreRect;
 

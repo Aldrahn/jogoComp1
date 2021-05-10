@@ -114,15 +114,18 @@ typedef struct Explosion
 
 int startGameScreen();
 bool startMenu(SDL_Window*, SDL_Renderer*);
-int gameLoop(SDL_Window *, SDL_Renderer *);
+int selectionScreen(SDL_Window*, SDL_Renderer*);
+int gameLoop(SDL_Window *, SDL_Renderer *, int);
 int gameOver(SDL_Window *, SDL_Renderer *);
+void victoryHighScore(SDL_Window *window, SDL_Renderer*, int);
+void gameOverHighScore(SDL_Window*, SDL_Renderer*, int);
 void blit(SDL_Texture *, SDL_Renderer *, int, int, PlayerShip*);
 SDL_Texture *loadShipImage(char *, SDL_Renderer *);
 SDL_Point getSize(SDL_Texture *);
 
 EnemyShip* createEnemyShip(int, int, int, int, int, int, int, int, int);
-PlayerShip *createPlayerShip(SDL_Renderer *);
-Bullet *createBullet(Ship *, BulletVector *, int, int);
+PlayerShip *createPlayerShip(SDL_Renderer *, int);
+Bullet *createBullet(Ship *, BulletVector *, int, int, int);
 BulletVector *createBulletVector(void);
 
 EnemyShip **moveEnemies(EnemyShip **, PlayerShip*, BulletVector*, int);
@@ -160,7 +163,8 @@ void score(char*, int);
 void organizeHighScore(int, char*);
 int getOffset(FILE*);
 void readData(FILE*, int, int*, char*, int);
-void readScore(SDL_Renderer* renderer);
+void readScore(SDL_Renderer*, SDL_Window*);
 int writeThingsOnScreen(SDL_Renderer*, SDL_Texture*, int);
 void  updateScreenWithText(SDL_Renderer*, TTF_Font*, char*, char*);
-SDL_Texture* showScoreOnScreen(SDL_Renderer* renderer, SDL_Texture* bg, int);
+SDL_Texture* showScoreOnScreen(SDL_Renderer*, SDL_Texture*, int);
+int findLowestHighScore(void);
