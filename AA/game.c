@@ -2036,83 +2036,6 @@ void changeShipColor(PlayerShip* player)
 	{
 		player->ally->srcrect.y = 300;
 	}
-	else if(ship->isPlayer == false)
-	{
-		int lastPosition = bulletVector->firstEmpty - 1;
-		for (int i = lastPosition; i >= 0; i--)
-		{
-			if(bulletVector->bullets[i]->owner == ship)
-			{
-				
-				if(bulletVector->bullets[i]->type == 2)
-				{
-					if((bulletVector->bullets[i]->x_axis > bulletVector->bullets[i]->start_x + bulletVector->bullets[i]->fireRate))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else if(bulletVector->bullets[i]->type == 6)
-				{
-					if((bulletVector->bullets[i]->x_axis < bulletVector->bullets[i]->start_x - bulletVector->bullets[i]->fireRate))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else if((bulletVector->bullets[i]->y_axis > bulletVector->bullets[i]->start_y + bulletVector->bullets[i]->fireRate))
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-	else
-	{
-		int lastPosition = bulletVector->firstEmpty - 1;
-		if(bulletVector->firstEmpty != 0)
-		{
-			if((bulletVector->bullets[lastPosition]->y_axis < bulletVector->bullets[lastPosition]->start_y - bulletVector->bullets[lastPosition]->fireRate))
-			{
-				
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		else if(bulletVector->firstEmpty == 0)
-		{
-			
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void changeShipColor(PlayerShip* player)
-{
-	if(player->ally->hp < 33)
-	{
-		player->ally->srcrect.y = 600;
-	}
-	else if(player->ally->hp > 33 && player->ally->hp < 66)
-	{
-		player->ally->srcrect.y = 300;
-	}
 	else
 	{
 		player->ally->srcrect.y = 0;
@@ -2208,14 +2131,14 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		{
 			printf("wave %d\n", waveCounter);
 			if(stopAux == 0){stopAux = 350;}
+			
+			if(i + 1 < waveRegister[waveCounter])
 			{
-				if(i + 1 < waveRegister[waveCounter])
-				{
-					i++;
-					arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, sequential, 0, stopAux);
-					arrayWave[i]->stopValue = arrayWave[i-1]->stopValue + arrayWave[i]->enemy->dstrect.h;
-				}
+				i++;
+				arrayWave[i] = createEnemyShip(6, 1280-90, 720, vertical, cima, -1, sequential, 0, stopAux);
+				arrayWave[i]->stopValue = arrayWave[i-1]->stopValue + arrayWave[i]->enemy->dstrect.h;
 			}
+			
 			else
 			{
 				arrayWave[i] = createEnemyShip(2, 0, 720, vertical, cima, -1, sequential, 0, stopAux);	
