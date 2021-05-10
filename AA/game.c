@@ -91,7 +91,6 @@ int startMenu(SDL_Window *window, SDL_Renderer *rend)
 	bool flagEnter = true;
 
 	SDL_Texture *bg = loadShipImage("assets/menu/game_screen.png", rend);
-
 	SDL_Rect a_BG = {0, 1080, 1920, 1080};
 	SDL_Rect b_BG = {0, 0, 1280, 720};
 
@@ -358,7 +357,7 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, int playerType)
 	SDL_Texture *enemyShipsSheet = loadShipImage("assets/objects/enemiessheets.png", rend);
 	SDL_Texture *explosions = loadShipImage("assets/objects/explosion.png", rend);
 	SDL_Texture *bossSheet = loadShipImage("assets/objects/boss_1.png", rend);
-	SDL_Texture *bullet_1 = loadShipImage("assets/objects/shoot2.png", rend);
+	SDL_Texture *bullet_1 = loadShipImage("assets/objects/shoots.png", rend);
 	SDL_Texture *pause_overlay = loadShipImage("assets/menu/pause_screen.png", rend);
 	SDL_Texture* textureWithScoring;
 	//Retângulos do BG
@@ -499,6 +498,25 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, int playerType)
 			//Atualiza o Player
 			blit(player->ally->texture, rend, player->ally->x_axis, player->ally->y_axis, player);
 
+
+			bulletVectorPlayer = moveBullet(bulletVectorPlayer, arrayWave, player, spawnedIndex);
+
+
+			for (int i = 0; i < bulletVectorPlayer->firstEmpty; i++)
+			{
+				if (bulletVectorPlayer->bullets[i] != NULL)
+				{
+					SDL_RenderCopy(rend, bullet_1, &bulletVectorPlayer->bullets[i]->srcrect, &bulletVectorPlayer->bullets[i]->dstrect);
+				}
+			}
+			for (int i = 0; i < bulletVectorEnemies->firstEmpty; i++)
+			{
+				if (bulletVectorEnemies->bullets[i] != NULL)
+				{
+					SDL_RenderCopy(rend, bullet_1, &bulletVectorEnemies->bullets[i]->srcrect, &bulletVectorEnemies->bullets[i]->dstrect);
+				}
+			}
+
 			//Atualiza a Wave Inimiga
 			for (int j = 0; j < spawnedIndex + 1; j++)
 			{
@@ -583,7 +601,44 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, int playerType)
 						enemyDmgAnimation(arrayWave[i]);
 					}
 				}
+				{
+					Mix_PlayChannel(2, bulletSound, 0);
+				}	
 			}
+		
+
+			//Animacao das naves inimigas
+			/*for (int i = 0; i < waveRegister[waveCounter]; i++)
+			{
+				if(arrayWave[i] != NULL && arrayWave[i]->doDestroyingAnimation)
+				{
+					arrayWave[i]->frameTime++;
+					if(FPS/arrayWave[i]->frameTime == 30)
+					{
+						arrayWave[i]->frameTime = 0;
+						destructionAnimation(arrayWave[i]->enemy);
+						if(arrayWave[i]->enemy->srcrectExplosion.y < 950)
+						{
+							SDL_RenderCopy(rend, explosions, &arrayWave[i]->enemy->srcrectExplosion, &arrayWave[i]->enemy->dstrect);
+						}
+						else
+						{ //Provavelmente o src das explosoes esta sendo requisitado demais e estao interpolando as animacoes uns dos outros
+							arrayWave[i]->doDestroyingAnimation = false;
+							arrayWave[i]->enemy->srcrectExplosion.x = 0;
+							arrayWave[i]->enemy->srcrectExplosion.y = 0;
+						}
+					}
+				}
+				else if(arrayWave[i] != NULL && arrayWave[i]->doDmgAnimation)
+				{
+					arrayWave[i]->frameTime++;
+					if(FPS/arrayWave[i]->frameTime == 15)
+					{
+						arrayWave[i]->frameTime = 0;
+						enemyDmgAnimation(arrayWave[i]);
+					}
+				}
+			}*/
 
 			if(player->doDmgAnimation == false)
 			{
@@ -679,7 +734,6 @@ int gameLoop(SDL_Window *window, SDL_Renderer *rend, int playerType)
 				spawnedIndex = 0;
 			}	
 		}
-
 
 		textureWithScoring = showScoreOnScreen(rend, bg, player->points);
 		SDL_RenderPresent(rend);
@@ -1521,6 +1575,10 @@ EnemyShip **moveEnemies(EnemyShip **arrayWave, PlayerShip *player, BulletVector*
 						if(contador2 >= 100)
 						{
 							Bullet* enemyBullet = createBullet(arrayWave[k]->enemy, bulletVector, 9, contador, -1);
+							if(contador2 == 200)
+							{
+								contador2 = 0;
+							}
 						}
 						else
 						{
@@ -1546,30 +1604,49 @@ Bullet *createBullet(Ship *source, BulletVector *bulletVector, int bulletType, i
 	if(source->isPlayer == true)
 	{
 		bullet->speed = 5;
+		bullet->damage = 100;
 		bullet->x_axis = source->x_axis + 27;
 		bullet->y_axis = source->y_axis - 45;
 		bullet->owner = source;
-		SDL_Rect a = {1, 1, 36, 46};
+		SDL_Rect a = {8, 0, 36, 46};
 		SDL_Rect b = {bullet->x_axis, bullet->y_axis, 38, 46};
 		bullet->srcrect = a;
 		bullet->dstrect = b;
 		bullet->fireRate = 80;
-
-		if(playerType == 2)
-		{
-			bullet->damage = 100;
-		}	
-
-		else
-		{
-			bullet->damage = 70;
-		}
 	}
+	else if(bulletType == 2)
+	{
+		bullet->speed = 1;
+		bullet->damage = 100;
+		bullet->x_axis = source->x_axis + dist;
+		bullet->y_axis = source->y_axis;
+		bullet->owner = source;
+		SDL_Rect a = {130, 0, 50, 46};
+		SDL_Rect b = {bullet->x_axis, bullet->y_axis, 38, 46};
+		bullet->srcrect = a;
+		bullet->dstrect = b;
+		bullet->type = bulletType;	
+		bullet->fireRate = 500;
 
+	}
+	else if(bulletType == 6)
+	{
+		bullet->speed = 1;
+		bullet->damage = 100;
+		bullet->x_axis = source->x_axis + dist;
+		bullet->y_axis = source->y_axis;
+		bullet->owner = source;
+		SDL_Rect a = {255, 0, 50, 46};
+		SDL_Rect b = {bullet->x_axis, bullet->y_axis, 38, 46};
+		bullet->srcrect = a;
+		bullet->dstrect = b;
+		bullet->type = bulletType;	
+		bullet->fireRate = 500;
+	}
 	else if(bulletType == 5)
 	{
 		bullet->speed = 9;
-		bullet->damage = 10;
+		bullet->damage = 5;
 		bullet->x_axis = source->x_axis + dist + 100;
 		bullet->y_axis = source->y_axis + 500;
 		bullet->owner = source;
@@ -1580,29 +1657,28 @@ Bullet *createBullet(Ship *source, BulletVector *bulletVector, int bulletType, i
 		bullet->type = bulletType;	
 		bullet->fireRate = 500;
 	}
-	else if(bulletType == 9)
+	else if(bulletType == 9 || bulletType == 3)
 	{
 		bullet->speed = 9;
 		bullet->damage = 10;
 		bullet->x_axis = 1300;
 		bullet->y_axis = 700 + dist;
 		bullet->owner = source;
-		SDL_Rect a = {1, 1, 36, 46};
+		SDL_Rect a = {200, 1, 36, 46};
 		SDL_Rect b = {bullet->x_axis, bullet->y_axis, 38, 46};
 		bullet->srcrect = a;
 		bullet->dstrect = b;
 		bullet->type = bulletType;	
 		bullet->fireRate = 500;
 	}
-
 	else
     {
         bullet->speed = 1;
-        bullet->damage = 10;
+        bullet->damage = 5;
         bullet->x_axis = source->x_axis + dist;
         bullet->y_axis = source->y_axis;
         bullet->owner = source;
-        SDL_Rect a = {1, 1, 36, 46};
+        SDL_Rect a = {200, 1, 36, 46};
         SDL_Rect b = {bullet->x_axis, bullet->y_axis, 38, 46};
         bullet->srcrect = a;
         bullet->dstrect = b;
@@ -1699,12 +1775,23 @@ BulletVector *moveBullet(BulletVector *bulletVector, EnemyShip** arrayWave, Play
 			{
 
 				bullet->x_axis += bullet->speed;
+				//bullet->y_axis = bullet->owner->y_axis + 20;
+				
 			}
-			else if(bullet->type == 6 || bullet->type == 9)
+			else if(bullet->type == 6)
+			{
+				bullet->x_axis -=  bullet->speed;
+				//bullet->dstrect.w = 1200;
+			}
+			else if(bullet->type == 5)
+			{
+
+			}
+			else if(bullet->type == 9)
 			{
 				bullet->x_axis -= bullet->speed;
 			}
-			else
+			else if(bullet->type != 2 && bullet->type != 6)
 			{
 				bullet->y_axis += bullet->speed;
 			}
@@ -1949,6 +2036,83 @@ void changeShipColor(PlayerShip* player)
 	{
 		player->ally->srcrect.y = 300;
 	}
+	else if(ship->isPlayer == false)
+	{
+		int lastPosition = bulletVector->firstEmpty - 1;
+		for (int i = lastPosition; i >= 0; i--)
+		{
+			if(bulletVector->bullets[i]->owner == ship)
+			{
+				
+				if(bulletVector->bullets[i]->type == 2)
+				{
+					if((bulletVector->bullets[i]->x_axis > bulletVector->bullets[i]->start_x + bulletVector->bullets[i]->fireRate))
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else if(bulletVector->bullets[i]->type == 6)
+				{
+					if((bulletVector->bullets[i]->x_axis < bulletVector->bullets[i]->start_x - bulletVector->bullets[i]->fireRate))
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else if((bulletVector->bullets[i]->y_axis > bulletVector->bullets[i]->start_y + bulletVector->bullets[i]->fireRate))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	else
+	{
+		int lastPosition = bulletVector->firstEmpty - 1;
+		if(bulletVector->firstEmpty != 0)
+		{
+			if((bulletVector->bullets[lastPosition]->y_axis < bulletVector->bullets[lastPosition]->start_y - bulletVector->bullets[lastPosition]->fireRate))
+			{
+				
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(bulletVector->firstEmpty == 0)
+		{
+			
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void changeShipColor(PlayerShip* player)
+{
+	if(player->ally->hp < 33)
+	{
+		player->ally->srcrect.y = 600;
+	}
+	else if(player->ally->hp > 33 && player->ally->hp < 66)
+	{
+		player->ally->srcrect.y = 300;
+	}
 	else
 	{
 		player->ally->srcrect.y = 0;
@@ -2044,10 +2208,7 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 		{
 			printf("wave %d\n", waveCounter);
 			if(stopAux == 0){stopAux = 350;}
-			if(i == 0)
 			{
-				arrayWave[i] = createEnemyShip(2, 0, 720, vertical, cima, -1, sequential, 0, stopAux);	
-				arrayWave[i]->stopValue = arrayWave[i]->enemy->y_axis - arrayWave[i]->enemy->speed*stopAux;
 				if(i + 1 < waveRegister[waveCounter])
 				{
 					i++;
@@ -2291,7 +2452,6 @@ EnemyShip** waveLoader(EnemyShip** arrayWave, int* waveRegister, int waveCounter
 				}
 				aux2 -= 70;
 			}
-
 			else
 			{
 				arrayWave[i] = createEnemyShip(4, 500, -230, vertical, baixo, -1, sequential, 0, 0);
@@ -2481,6 +2641,8 @@ void organizeHighScore(int scorePlayer, char* nomePlayer)
 			fwrite(stringOrganizadas[i], sizeof(buffer), 1, hsFile);
 			printf("colocando o jogador %s de pontuacao %d\n", stringOrganizadas[i], intOrganizados[i]);
 		}
+
+		fclose(hsFile);
 	}
 
 	else
