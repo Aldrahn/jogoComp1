@@ -78,6 +78,7 @@ typedef struct
 	bool doInvencibilityAnimation;
 	bool doDmgAnimation;
 	time_t invincibilityTimeStart;
+	int type;
 	Ship *ally;
 } PlayerShip;
 
@@ -167,5 +168,6 @@ void readData(FILE*, int, int*, char*, int);
 void readScore(SDL_Renderer*, SDL_Window*);
 int writeThingsOnScreen(SDL_Renderer*, SDL_Texture*, int);
 void  updateScreenWithText(SDL_Renderer*, TTF_Font*, char*, char*);
-SDL_Texture* showScoreOnScreen(SDL_Renderer*, SDL_Texture*, int);
+void showScoreOnScreen(SDL_Renderer*, SDL_Texture*, int);
 int findLowestHighScore(void);
+SDL_Texture* loadFontForScoring(SDL_Renderer*);
