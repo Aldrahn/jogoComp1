@@ -60,9 +60,10 @@ typedef struct EnemyShip
 	bool timeRunning;
 	bool doDmgAnimation;
 	bool doDestroyingAnimation;
-	int frameTime;
+	int frameTimeDamage;
 	Ship* enemy;
-	
+	int frameTimeDestroy;
+
 } EnemyShip;
 
 typedef struct
@@ -130,7 +131,7 @@ BulletVector *createBulletVector(void);
 
 EnemyShip **moveEnemies(EnemyShip **, PlayerShip*, BulletVector*, int);
 PlayerShip *movePlayer(PlayerShip *, EnemyShip **, int);
-BulletVector *moveBullet(BulletVector *,EnemyShip** , PlayerShip* , int );
+BulletVector *moveBullet(BulletVector *,EnemyShip** , PlayerShip* , int);
 PlayerShip *doKeyDown(SDL_KeyboardEvent *, PlayerShip *);
 PlayerShip *doKeyUp(SDL_KeyboardEvent *, PlayerShip *);
 
